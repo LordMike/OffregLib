@@ -17,6 +17,7 @@ For that purpose, microsoft provided the [Offreg.dll](http://msdn.microsoft.com/
 * API helpers to delete subkey trees (normally you'd need to recurse manually).
 * All objects are disposable, and will close their respective pointers correctly.
 * Resembles the .NET Registry ([Microsoft.Win32.Registry](http://msdn.microsoft.com/en-us/library/microsoft.win32.registry.aspx)) as much as possible.
+* Automatic switching between 32 and 64 bit offreg.dll files.
 
 ## Examples 
 ### Create a reghive, save a string, and read it again.
