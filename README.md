@@ -23,10 +23,11 @@ For that purpose, microsoft provided the [Offreg.dll](http://msdn.microsoft.com/
 
 * The library works in UTF-16 Unicode, so on some older systems (like Windows 2000), I expect it to not work (if one could run it even), as this system uses ANSI encoding.
 * I have not figured out how to support the Resource types:
-** REG_FULL_RESOURCE_DESCRIPTOR
-** REG_RESOURCE_LIST
-** REG_RESOURCE_REQUIREMENTS_LIST
+	* REG_FULL_RESOURCE_DESCRIPTOR
+	* REG_RESOURCE_LIST
+	* REG_RESOURCE_REQUIREMENTS_LIST
 * To obtain a large registry hive to work with, see ObtainingSystemHives.md
+* The library is currently very slow, somewhere near 6-7 time slower than .NET's own Registry access. Future improvements can be made to improve performance.
 
 ## Examples 
 ### Create a registry hive, save a string, and read it again.
