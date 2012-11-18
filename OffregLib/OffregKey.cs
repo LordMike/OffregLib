@@ -428,7 +428,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Gets the data of a specific value.
+        /// Gets the data for a specific value.
         /// </summary>
         /// <param name="name">The name of the value to retrieve the data of.</param>
         /// <returns>The data for the value.</returns>
@@ -437,6 +437,18 @@ namespace OffregLib
             Tuple<RegValueType, byte[]> data = GetValueInternal(name);
 
             return OffregHelper.ConvertValueDataToObject(data.Item1, data.Item2);
+        }
+
+        /// <summary>
+        /// Gets the binry data for a specific value.
+        /// </summary>
+        /// <param name="name">The name of the value to retrieve the data of.</param>
+        /// <returns>The data for the value.</returns>
+        public byte[] GetValueBytes(string name)
+        {
+            Tuple<RegValueType, byte[]> data = GetValueInternal(name);
+
+            return data.Item2;
         }
 
         /// <summary>

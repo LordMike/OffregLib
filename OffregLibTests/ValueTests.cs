@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 using OffregLib;
@@ -25,7 +26,7 @@ namespace OffregLibTests
             _hive.Close();
         }
 
-        private void EnsureValueNames(params string[] expectNames)
+        private void EnsureValueNamesExist(params string[] expectNames)
         {
             Assert.AreEqual(expectNames.Length, _key.ValueCount);
 
@@ -49,10 +50,10 @@ namespace OffregLibTests
             string test2 = "testRocks"; // Longer string, to test if the previous one gets padded with a null-terminator
 
             _key.SetValue("B", test);
-            EnsureValueNames("B");
+            EnsureValueNamesExist("B");
 
             _key.SetValue("C", test2);
-            EnsureValueNames("B", "C");
+            EnsureValueNamesExist("B", "C");
 
             Assert.AreEqual(RegValueType.REG_SZ, _key.GetValueKind("B"));
             Assert.AreEqual(RegValueType.REG_SZ, _key.GetValueKind("C"));
@@ -60,17 +61,23 @@ namespace OffregLibTests
             object result = _key.GetValue("B");
             object result2 = _key.GetValue("C");
 
+            byte[] binary1 = _key.GetValueBytes("B");
+            byte[] binary2 = _key.GetValueBytes("C");
+
             Assert.IsInstanceOfType(result, typeof(string));
             Assert.AreEqual(test, (string)result);
 
             Assert.IsInstanceOfType(result2, typeof(string));
             Assert.AreEqual(test2, (string)result2);
 
+            Assert.IsTrue(binary1.SequenceEqual(Encoding.Unicode.GetBytes(test).Concat(new byte[] { 0x00, 0x00 })));
+            Assert.IsTrue(binary2.SequenceEqual(Encoding.Unicode.GetBytes(test2).Concat(new byte[] { 0x00, 0x00 })));
+
             _key.DeleteValue("B");
-            EnsureValueNames("C");
+            EnsureValueNamesExist("C");
 
             _key.DeleteValue("C");
-            EnsureValueNames();
+            EnsureValueNamesExist();
         }
 
         [TestMethod]
@@ -79,17 +86,19 @@ namespace OffregLibTests
             string test = "test";
 
             _key.SetValue("B", test, RegValueType.REG_EXPAND_SZ);
-            EnsureValueNames("B");
+            EnsureValueNamesExist("B");
 
             Assert.AreEqual(RegValueType.REG_EXPAND_SZ, _key.GetValueKind("B"));
 
             object result = _key.GetValue("B");
+            byte[] binary = _key.GetValueBytes("B");
 
             Assert.IsInstanceOfType(result, typeof(string));
             Assert.AreEqual(test, (string)result);
+            Assert.IsTrue(binary.SequenceEqual(Encoding.Unicode.GetBytes(test).Concat(new byte[] { 0x00, 0x00 })));
 
             _key.DeleteValue("B");
-            EnsureValueNames();
+            EnsureValueNamesExist();
         }
 
         [TestMethod]
@@ -103,12 +112,14 @@ namespace OffregLibTests
             Assert.AreEqual(RegValueType.REG_BINARY, _key.GetValueKind("B"));
 
             object result = _key.GetValue("B");
+            byte[] binary = _key.GetValueBytes("B");
 
             Assert.IsInstanceOfType(result, typeof(byte[]));
             Assert.IsTrue(test.SequenceEqual((byte[])result));
+            Assert.IsTrue(test.SequenceEqual(binary));
 
             _key.DeleteValue("B");
-            EnsureValueNames();
+            EnsureValueNamesExist();
         }
 
         [TestMethod]
@@ -124,18 +135,22 @@ namespace OffregLibTests
             foreach (int test in tests)
             {
                 _key.SetValue("B", test);
-                EnsureValueNames("B");
+                EnsureValueNamesExist("B");
 
                 Assert.AreEqual(RegValueType.REG_DWORD, _key.GetValueKind("B"));
 
                 object result = _key.GetValue("B");
+                byte[] binary = _key.GetValueBytes("B");
 
                 Assert.IsInstanceOfType(result, typeof(int));
                 Assert.AreEqual(test, (int)result);
+
+                byte[] expectedBinary = BitConverter.GetBytes(test);
+                Assert.IsTrue(binary.SequenceEqual(expectedBinary));
             }
 
             _key.DeleteValue("B");
-            EnsureValueNames();
+            EnsureValueNamesExist();
         }
 
         [TestMethod]
@@ -151,18 +166,23 @@ namespace OffregLibTests
             foreach (int test in tests)
             {
                 _key.SetValue("B", test, RegValueType.REG_DWORD_BIG_ENDIAN);
-                EnsureValueNames("B");
+                EnsureValueNamesExist("B");
 
                 Assert.AreEqual(RegValueType.REG_DWORD_BIG_ENDIAN, _key.GetValueKind("B"));
 
                 object result = _key.GetValue("B");
+                byte[] binary = _key.GetValueBytes("B");
 
                 Assert.IsInstanceOfType(result, typeof(int));
                 Assert.AreEqual(test, (int)result);
+
+                byte[] expectedBinary = BitConverter.GetBytes(test);
+                Array.Reverse(expectedBinary);
+                Assert.IsTrue(binary.SequenceEqual(expectedBinary));
             }
 
             _key.DeleteValue("B");
-            EnsureValueNames();
+            EnsureValueNamesExist();
         }
 
         [TestMethod]
@@ -171,17 +191,19 @@ namespace OffregLibTests
             string test = "test";
 
             _key.SetValue("B", test, RegValueType.REG_LINK);
-            EnsureValueNames("B");
+            EnsureValueNamesExist("B");
 
             Assert.AreEqual(RegValueType.REG_LINK, _key.GetValueKind("B"));
 
             object result = _key.GetValue("B");
+            byte[] binary = _key.GetValueBytes("B");
 
             Assert.IsInstanceOfType(result, typeof(string));
             Assert.AreEqual(test, (string)result);
+            Assert.IsTrue(binary.SequenceEqual(Encoding.Unicode.GetBytes(test).Concat(new byte[] { 0x00, 0x00 })));
 
             _key.DeleteValue("B");
-            EnsureValueNames();
+            EnsureValueNamesExist();
         }
 
         [TestMethod]
@@ -190,17 +212,21 @@ namespace OffregLibTests
             string[] test = new[] { "Hello", "World", "Rocks!" };
 
             _key.SetValue("B", test);
-            EnsureValueNames("B");
+            EnsureValueNamesExist("B");
 
             Assert.AreEqual(RegValueType.REG_MULTI_SZ, _key.GetValueKind("B"));
 
             object result = _key.GetValue("B");
+            byte[] binary = _key.GetValueBytes("B");
 
             Assert.IsInstanceOfType(result, typeof(string[]));
             Assert.IsTrue(test.SequenceEqual((string[])result));
 
+            byte[] expectedBinary = test.SelectMany(s => Encoding.Unicode.GetBytes(s).Concat(new byte[] { 0x00, 0x00 })).Concat(new byte[] { 0x00, 0x00 }).ToArray();
+            Assert.IsTrue(binary.SequenceEqual(expectedBinary));
+
             _key.DeleteValue("B");
-            EnsureValueNames();
+            EnsureValueNamesExist();
         }
 
         [TestMethod]
@@ -234,30 +260,36 @@ namespace OffregLibTests
             foreach (long test in tests)
             {
                 _key.SetValue("B", test);
-                EnsureValueNames("B");
+                EnsureValueNamesExist("B");
 
                 Assert.AreEqual(RegValueType.REG_QWORD, _key.GetValueKind("B"));
 
                 object result = _key.GetValue("B");
+                byte[] binary = _key.GetValueBytes("B");
 
                 Assert.IsInstanceOfType(result, typeof(long));
                 Assert.AreEqual(test, (long)result);
+
+                byte[] expectedBinary = BitConverter.GetBytes(test);
+                Assert.IsTrue(binary.SequenceEqual(expectedBinary));
             }
 
             _key.DeleteValue("B");
-            EnsureValueNames();
+            EnsureValueNamesExist();
         }
 
         [TestMethod]
         public void ValueMultiLineStringInvalid()
         {
-            _key.SetValue("test", new byte[0], RegValueType.REG_MULTI_SZ);
-            EnsureValueNames("test");
+            _key.SetValue("B", new byte[0], RegValueType.REG_MULTI_SZ);
+            EnsureValueNamesExist("B");
 
-            object result = _key.GetValue("test");
+            object result = _key.GetValue("B");
+            byte[] binary = _key.GetValueBytes("B");
 
             Assert.IsInstanceOfType(result, typeof(string[]));
             Assert.AreEqual(0, ((string[])result).Length);
+            Assert.AreEqual(0, binary.Length);
         }
     }
 }
