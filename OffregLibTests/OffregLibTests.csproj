@@ -45,6 +45,7 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InvalidValueTests.cs" />
     <Compile Include="ValueTests.cs" />
     <Compile Include="HiveTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

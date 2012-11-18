@@ -123,6 +123,36 @@ namespace OffregLibTests
         }
 
         [TestMethod]
+        public void ValueSaveReadBinaryAsAllTypes()
+        {
+            byte[] expected = new byte[8];
+            Random random = new Random();
+
+            foreach (RegValueType type in Enum.GetValues(typeof(RegValueType)))
+            {
+                if (type == RegValueType.REG_FULL_RESOURCE_DESCRIPTOR || 
+                    type == RegValueType.REG_RESOURCE_LIST ||
+                    type == RegValueType.REG_RESOURCE_REQUIREMENTS_LIST)
+                    // Skip these unsupported types
+                    continue;
+
+                random.NextBytes(expected);
+
+                _key.SetValue("B", expected, type);
+                Assert.AreEqual(type, _key.GetValueKind("B"));
+
+                byte[] binaryResult = _key.GetValueBytes("B");
+                Assert.IsTrue(expected.SequenceEqual(binaryResult));
+
+                object parsedResult;
+                bool parsed = _key.TryGetValue("B", out parsedResult);
+
+                _key.DeleteValue("B");
+                EnsureValueNamesExist();
+            }
+        }
+
+        [TestMethod]
         public void ValueSaveReadDword()
         {
             int[] tests = new int[4];
@@ -276,20 +306,6 @@ namespace OffregLibTests
 
             _key.DeleteValue("B");
             EnsureValueNamesExist();
-        }
-
-        [TestMethod]
-        public void ValueMultiLineStringInvalid()
-        {
-            _key.SetValue("B", new byte[0], RegValueType.REG_MULTI_SZ);
-            EnsureValueNamesExist("B");
-
-            object result = _key.GetValue("B");
-            byte[] binary = _key.GetValueBytes("B");
-
-            Assert.IsInstanceOfType(result, typeof(string[]));
-            Assert.AreEqual(0, ((string[])result).Length);
-            Assert.AreEqual(0, binary.Length);
         }
     }
 }

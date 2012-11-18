@@ -20,6 +20,7 @@ namespace OffregLib
         public string Name { get; set; }
         public object Data { get; set; }
         public RegValueType Type { get; set; }
+        public bool InvalidData { get; set; }
     }
 
     /// <summary>
@@ -47,7 +48,7 @@ namespace OffregLib
         /// </summary>
         public int SubkeyCount
         {
-            get { return (int) _metadata.SubKeysCount; }
+            get { return (int)_metadata.SubKeysCount; }
         }
 
         /// <summary>
@@ -55,7 +56,7 @@ namespace OffregLib
         /// </summary>
         public int ValueCount
         {
-            get { return (int) _metadata.ValuesCount; }
+            get { return (int)_metadata.ValuesCount; }
         }
 
         /// <summary>
@@ -96,7 +97,7 @@ namespace OffregLib
             Win32Result result = OffregNative.OpenKey(parentKey._intPtr, name, out _intPtr);
 
             if (result != Win32Result.ERROR_SUCCESS)
-                throw new Win32Exception((int) result);
+                throw new Win32Exception((int)result);
 
             Name = name;
             FullName = (parentKey.FullName == null ? "" : parentKey.FullName + "\\") + name;
@@ -125,13 +126,13 @@ namespace OffregLib
                                                            ref lastWrite);
 
             if (result != Win32Result.ERROR_SUCCESS)
-                throw new Win32Exception((int) result);
+                throw new Win32Exception((int)result);
 
             // The returned size does is in characters (unicode), excluding NULL chars. Increment it to have space
-            sizeClass = sizeClass*2 + 1;
+            sizeClass = sizeClass * 2 + 1;
 
             // Allocate
-            StringBuilder sbClass = new StringBuilder((int) sizeClass);
+            StringBuilder sbClass = new StringBuilder((int)sizeClass);
 
             result = OffregNative.QueryInfoKey(_intPtr, sbClass, ref sizeClass, ref countSubKeys, ref maxSubKeyLen,
                                                ref maxClassLen,
@@ -140,16 +141,16 @@ namespace OffregLib
                                                ref lastWrite);
 
             if (result != Win32Result.ERROR_SUCCESS)
-                throw new Win32Exception((int) result);
+                throw new Win32Exception((int)result);
 
             _metadata.Class = sbClass.ToString();
             _metadata.LastWriteTime = lastWrite;
 
             _metadata.SubKeysCount = countSubKeys;
-            _metadata.MaxSubKeyLen = maxSubKeyLen*2 + 1; // Unicode chars, no null terminator.
-            _metadata.MaxClassLen = maxClassLen*2 + 1; // Unicode chars, no null terminator.
+            _metadata.MaxSubKeyLen = maxSubKeyLen * 2 + 1; // Unicode chars, no null terminator.
+            _metadata.MaxClassLen = maxClassLen * 2 + 1; // Unicode chars, no null terminator.
             _metadata.ValuesCount = countValues;
-            _metadata.MaxValueNameLen = maxValueNameLen*2 + 1; // Unicode chars, no null terminator.
+            _metadata.MaxValueNameLen = maxValueNameLen * 2 + 1; // Unicode chars, no null terminator.
             _metadata.MaxValueLen = maxValueLen; // Bytes
             _metadata.SizeSecurityDescriptor = securityDescriptorSize;
         }
@@ -167,15 +168,15 @@ namespace OffregLib
                 uint sizeName = _metadata.MaxSubKeyLen;
                 uint sizeClass = _metadata.MaxClassLen;
 
-                StringBuilder sbName = new StringBuilder((int) sizeName);
-                StringBuilder sbClass = new StringBuilder((int) sizeClass);
+                StringBuilder sbName = new StringBuilder((int)sizeName);
+                StringBuilder sbClass = new StringBuilder((int)sizeClass);
                 FILETIME fileTime = new FILETIME();
 
                 Win32Result result = OffregNative.EnumKey(_intPtr, item, sbName, ref sizeName, sbClass, ref sizeClass,
                                                           ref fileTime);
 
                 if (result != Win32Result.ERROR_SUCCESS)
-                    throw new Win32Exception((int) result);
+                    throw new Win32Exception((int)result);
 
                 SubKeyContainer container = new SubKeyContainer();
 
@@ -201,12 +202,12 @@ namespace OffregLib
             {
                 uint sizeName = _metadata.MaxSubKeyLen;
 
-                StringBuilder sbName = new StringBuilder((int) sizeName);
+                StringBuilder sbName = new StringBuilder((int)sizeName);
                 Win32Result result = OffregNative.EnumKey(_intPtr, item, sbName, ref sizeName, null, IntPtr.Zero,
                                                           IntPtr.Zero);
 
                 if (result != Win32Result.ERROR_SUCCESS)
-                    throw new Win32Exception((int) result);
+                    throw new Win32Exception((int)result);
 
                 results[item] = sbName.ToString();
             }
@@ -238,7 +239,7 @@ namespace OffregLib
                                                         out disposition);
 
             if (result != Win32Result.ERROR_SUCCESS)
-                throw new Win32Exception((int) result);
+                throw new Win32Exception((int)result);
 
             // Return new key
             OffregKey newKey = new OffregKey(this, newKeyPtr, name);
@@ -259,7 +260,7 @@ namespace OffregLib
             Win32Result result = OffregNative.DeleteKey(_intPtr, null);
 
             if (result != Win32Result.ERROR_SUCCESS)
-                throw new Win32Exception((int) result);
+                throw new Win32Exception((int)result);
 
             // Refresh parent
             _parent.RefreshMetadata();
@@ -277,7 +278,7 @@ namespace OffregLib
             Win32Result result = OffregNative.DeleteKey(_intPtr, name);
 
             if (result != Win32Result.ERROR_SUCCESS)
-                throw new Win32Exception((int) result);
+                throw new Win32Exception((int)result);
 
             RefreshMetadata();
         }
@@ -319,7 +320,7 @@ namespace OffregLib
                 {
                     switch (ex.NativeErrorCode)
                     {
-                        case (int) Win32Result.ERROR_FILE_NOT_FOUND:
+                        case (int)Win32Result.ERROR_FILE_NOT_FOUND:
                             // Child didn't exist
                             break;
                         default:
@@ -344,12 +345,12 @@ namespace OffregLib
             {
                 uint sizeName = _metadata.MaxValueNameLen;
 
-                StringBuilder sbName = new StringBuilder((int) sizeName);
+                StringBuilder sbName = new StringBuilder((int)sizeName);
                 Win32Result result = OffregNative.EnumValue(_intPtr, item, sbName, ref sizeName, IntPtr.Zero, IntPtr.Zero,
                                                             IntPtr.Zero);
 
                 if (result != Win32Result.ERROR_SUCCESS)
-                    throw new Win32Exception((int) result);
+                    throw new Win32Exception((int)result);
 
                 results[item] = sbName.ToString();
             }
@@ -369,7 +370,7 @@ namespace OffregLib
             IntPtr dataPtr = IntPtr.Zero;
             try
             {
-                dataPtr = Marshal.AllocHGlobal((int) _metadata.MaxValueLen);
+                dataPtr = Marshal.AllocHGlobal((int)_metadata.MaxValueLen);
 
                 // Iterate all values
                 for (uint item = 0; item < _metadata.ValuesCount; item++)
@@ -377,7 +378,7 @@ namespace OffregLib
                     uint sizeName = _metadata.MaxValueNameLen;
                     uint sizeData = _metadata.MaxValueLen;
 
-                    StringBuilder sbName = new StringBuilder((int) sizeName);
+                    StringBuilder sbName = new StringBuilder((int)sizeName);
                     RegValueType type;
 
                     // Get item
@@ -385,17 +386,19 @@ namespace OffregLib
                                                         ref sizeData);
 
                     if (result != Win32Result.ERROR_SUCCESS)
-                        throw new Win32Exception((int) result);
+                        throw new Win32Exception((int)result);
 
                     Debug.WriteLine("Read " + sbName + " to " + sizeData + " bytes");
 
                     byte[] data = new byte[sizeData];
-                    Marshal.Copy(dataPtr, data, 0, (int) sizeData);
+                    Marshal.Copy(dataPtr, data, 0, (int)sizeData);
 
                     ValueContainer container = new ValueContainer();
 
+                    object parsedData;
                     container.Name = sbName.ToString();
-                    container.Data = OffregHelper.ConvertValueDataToObject(type, data);
+                    container.InvalidData =  OffregHelper.TryConvertValueDataToObject(type, data, out parsedData);
+                    container.Data = parsedData;
                     container.Type = type;
 
                     results[item] = container;
@@ -422,21 +425,38 @@ namespace OffregLib
             Win32Result result = OffregNative.GetValue(_intPtr, null, name, out type, IntPtr.Zero, IntPtr.Zero);
 
             if (result != Win32Result.ERROR_SUCCESS)
-                throw new Win32Exception((int) result);
+                throw new Win32Exception((int)result);
 
             return type;
         }
 
         /// <summary>
         /// Gets the data for a specific value.
+        /// This method will attempt to convert the data into the format specified by the value, if this fails, it returns a byte[] containing the data.
         /// </summary>
         /// <param name="name">The name of the value to retrieve the data of.</param>
         /// <returns>The data for the value.</returns>
         public object GetValue(string name)
         {
-            Tuple<RegValueType, byte[]> data = GetValueInternal(name);
+            Tuple<RegValueType, byte[]> internalData = GetValueInternal(name);
 
-            return OffregHelper.ConvertValueDataToObject(data.Item1, data.Item2);
+            object data;
+            OffregHelper.TryConvertValueDataToObject(internalData.Item1, internalData.Item2, out data);
+
+            return data;
+        }
+
+        /// <summary>
+        /// Attempt to read the data for a value, and parse it.
+        /// </summary>
+        /// <param name="name">The name of the value</param>
+        /// <param name="data">The parsed data, or byte[] if parsing failed.</param>
+        /// <returns>True for success, false otherwise. If the result is false, the data is always a byte[].</returns>
+        public bool TryGetValue(string name, out object data)
+        {
+            Tuple<RegValueType, byte[]> internalData = GetValueInternal(name);
+
+            return OffregHelper.TryConvertValueDataToObject(internalData.Item1, internalData.Item2, out data);
         }
 
         /// <summary>
@@ -548,10 +568,10 @@ namespace OffregLib
 
                 Debug.WriteLine("Setting " + name + " to " + data.Length + " bytes");
 
-                Win32Result result = OffregNative.SetValue(_intPtr, name, type, dataPtr, (uint) data.Length);
+                Win32Result result = OffregNative.SetValue(_intPtr, name, type, dataPtr, (uint)data.Length);
 
                 if (result != Win32Result.ERROR_SUCCESS)
-                    throw new Win32Exception((int) result);
+                    throw new Win32Exception((int)result);
             }
             finally
             {
@@ -571,7 +591,7 @@ namespace OffregLib
             Win32Result result = OffregNative.DeleteValue(_intPtr, name);
 
             if (result != Win32Result.ERROR_SUCCESS)
-                throw new Win32Exception((int) result);
+                throw new Win32Exception((int)result);
 
             RefreshMetadata();
         }
@@ -590,23 +610,23 @@ namespace OffregLib
             Win32Result result = OffregNative.GetValue(_intPtr, null, name, out type, IntPtr.Zero, ref size);
 
             if (result != Win32Result.ERROR_SUCCESS)
-                throw new Win32Exception((int) result);
+                throw new Win32Exception((int)result);
 
             // Allocate buffer
             byte[] res = new byte[size];
             IntPtr dataPtr = IntPtr.Zero;
             try
             {
-                dataPtr = Marshal.AllocHGlobal((int) size);
+                dataPtr = Marshal.AllocHGlobal((int)size);
 
                 // Get data
                 result = OffregNative.GetValue(_intPtr, null, name, out type, dataPtr, ref size);
 
                 if (result != Win32Result.ERROR_SUCCESS)
-                    throw new Win32Exception((int) result);
+                    throw new Win32Exception((int)result);
 
                 // Copy data
-                Marshal.Copy(dataPtr, res, 0, (int) size);
+                Marshal.Copy(dataPtr, res, 0, (int)size);
             }
             finally
             {
@@ -625,7 +645,7 @@ namespace OffregLib
                 Win32Result res = OffregNative.CloseKey(_intPtr);
 
                 if (res != Win32Result.ERROR_SUCCESS)
-                    throw new Win32Exception((int) res);
+                    throw new Win32Exception((int)res);
             }
         }
 
