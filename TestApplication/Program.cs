@@ -14,9 +14,9 @@ namespace TestApplication
 
         private static void ExampleRecurseHive()
         {
-            string file = @"reghive";
+            string file = @"hive";
 
-            // Open an existing Reghive
+            // Open an existing registry hive
             using (OffregHive hive = OffregHive.Open(file))
             {
                 OffregKey root = hive.Root;

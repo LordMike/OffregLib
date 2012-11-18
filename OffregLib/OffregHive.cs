@@ -11,7 +11,7 @@ namespace OffregLib
         public OffregKey Root { get; private set; }
 
         /// <summary>
-        /// Internal constructor to form a RegHive from an open handle.
+        /// Internal constructor to form an Offline Registry Hive from an open handle.
         /// </summary>
         /// <param name="hivePtr"></param>
         internal OffregHive(IntPtr hivePtr)
