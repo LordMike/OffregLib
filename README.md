@@ -63,7 +63,7 @@ private static void Main(string[] args)
 ```csharp
 private static void Main(string[] args)
 {
-    string file = @"C:\Users\Mike\Desktop\SOFTWARE";
+    string file = @"hiveFile";
 
     // Open an existing Registry Hive
     using (OffregHive hive = OffregHive.Open(file))
