@@ -11,13 +11,22 @@ For that purpose, microsoft provided the [Offreg.dll](http://msdn.microsoft.com/
 
 ## Features
 
-
 * Open, create and modify Registry Hive files programmatically.
 * Read, enumerate and delete subkeys and values.
 * API helpers to delete subkey trees (normally you'd need to recurse manually).
 * All objects are disposable, and will close their respective pointers correctly.
 * Resembles the .NET Registry ([Microsoft.Win32.Registry](http://msdn.microsoft.com/en-us/library/microsoft.win32.registry.aspx)) as much as possible.
 * Automatic switching between 32 and 64 bit offreg.dll files.
+* Unit tests to test basic functionality
+
+## Notes
+
+* The library works in UTF-16 Unicode, so on some older systems (like Windows 2000), I expect it to not work (if one could run it even), as this system uses ANSI encoding.
+* I have not figured out how to support the Resource types:
+** REG_FULL_RESOURCE_DESCRIPTOR
+** REG_RESOURCE_LIST
+** REG_RESOURCE_REQUIREMENTS_LIST
+* To obtain a large registry hive to work with, see ObtainingSystemHives.md
 
 ## Examples 
 ### Create a registry hive, save a string, and read it again.
@@ -112,4 +121,4 @@ private static void Recurse(OffregKey key)
 }
 ```
 
-For more examples, look at the Test library on how to accomplish various functions.
+For more examples, look at the Test application on how to accomplish various functions.
