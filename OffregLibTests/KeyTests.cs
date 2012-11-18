@@ -53,7 +53,7 @@ namespace OffregLibTests
             EnsureKeyNames("test", "test2");
 
             StringBuilder sb = new StringBuilder(255);
-            for (int i = 0; i < 255/5; i++)
+            for (int i = 0; i < 255 / 5; i++)
                 sb.Append("LongN");
             string longName = sb.ToString();
 
@@ -77,7 +77,7 @@ namespace OffregLibTests
             }
             catch (Win32Exception ex)
             {
-                Assert.AreEqual(Win32Result.ERROR_INVALID_PARAMETER, (Win32Result) ex.NativeErrorCode);
+                Assert.AreEqual(Win32Result.ERROR_INVALID_PARAMETER, (Win32Result)ex.NativeErrorCode);
             }
         }
 
@@ -108,7 +108,7 @@ namespace OffregLibTests
             }
             catch (Win32Exception ex)
             {
-                Assert.AreEqual(Win32Result.ERROR_FILE_NOT_FOUND, (Win32Result) ex.NativeErrorCode);
+                Assert.AreEqual(Win32Result.ERROR_FILE_NOT_FOUND, (Win32Result)ex.NativeErrorCode);
             }
         }
 
@@ -157,7 +157,7 @@ namespace OffregLibTests
             }
             catch (Win32Exception ex)
             {
-                Assert.AreEqual(Win32Result.ERROR_KEY_HAS_CHILDREN, (Win32Result) ex.NativeErrorCode);
+                Assert.AreEqual(Win32Result.ERROR_KEY_HAS_CHILDREN, (Win32Result)ex.NativeErrorCode);
             }
         }
 
@@ -186,7 +186,26 @@ namespace OffregLibTests
             }
             catch (Win32Exception ex)
             {
-                Assert.AreEqual(Win32Result.ERROR_FILE_NOT_FOUND, (Win32Result) ex.NativeErrorCode);
+                Assert.AreEqual(Win32Result.ERROR_FILE_NOT_FOUND, (Win32Result)ex.NativeErrorCode);
+            }
+        }
+
+        [TestMethod]
+        public void KeyCreateExisting()
+        {
+            using (OffregKey subKey = _key.CreateSubKey("test"))
+            {
+                subKey.SetValue("val", "test");
+            }
+
+            using (OffregKey subKey = _key.CreateSubKey("test"))
+            {
+                Assert.AreEqual(1, subKey.ValueCount);
+
+                object result = subKey.GetValue("val");
+
+                Assert.IsInstanceOfType(result, typeof(string));
+                Assert.AreEqual("test", result as string);
             }
         }
     }

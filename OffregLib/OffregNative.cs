@@ -94,6 +94,12 @@ namespace OffregLib
         [DllImport(OffRegDllName64, EntryPoint = "ORCreateHive", CharSet = CharSet.Unicode)]
         private static extern Win32Result CreateHive64(out IntPtr rootKeyHandle);
 
+        /// <summary>
+        /// Create a new Registry Hive
+        /// See http://msdn.microsoft.com/en-us/library/2d6dt3kf.aspx
+        /// </summary>
+        /// <param name="rootKeyHandle">The handle to the new hive.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result CreateHive(out IntPtr rootKeyHandle)
         {
             return Environment.Is64BitProcess ? CreateHive64(out rootKeyHandle) : CreateHive32(out rootKeyHandle);
@@ -105,6 +111,13 @@ namespace OffregLib
         [DllImport(OffRegDllName64, EntryPoint = "OROpenHive", CharSet = CharSet.Unicode)]
         private static extern Win32Result OpenHive64(string path, out IntPtr rootKeyHandle);
 
+        /// <summary>
+        /// Open an existing Registry Hive
+        /// See http://msdn.microsoft.com/en-us/library/ee210770(v=vs.85).aspx
+        /// </summary>
+        /// <param name="path">The path to the hive file.</param>
+        /// <param name="rootKeyHandle">The handle to an open hive.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result OpenHive(string path, out IntPtr rootKeyHandle)
         {
             return Environment.Is64BitProcess
@@ -118,6 +131,14 @@ namespace OffregLib
         [DllImport(OffRegDllName64, EntryPoint = "ORCloseHive", CharSet = CharSet.Unicode)]
         private static extern Win32Result CloseHive64(IntPtr rootKeyHandle);
 
+        /// <summary>
+        /// Close an open hive, freeing ressources used by it.
+        /// See http://msdn.microsoft.com/en-us/library/ee210758(v=vs.85).aspx
+        /// </summary>
+        /// <seealso cref="SaveHive"/>
+        /// <remarks>This does not save a hive to disk, to preserve changes, see <see cref="SaveHive"/>.</remarks>
+        /// <param name="rootKeyHandle">The handle to an open hive.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result CloseHive(IntPtr rootKeyHandle)
         {
             return Environment.Is64BitProcess ? CloseHive64(rootKeyHandle) : CloseHive32(rootKeyHandle);
@@ -137,6 +158,16 @@ namespace OffregLib
             uint dwOsMajorVersion,
             uint dwOsMinorVersion);
 
+        /// <summary>
+        /// Save an open hive to disk.
+        /// This saves the hive with a specific compatibility option. See the link below for more details.
+        /// See http://msdn.microsoft.com/en-us/library/ee210773(v=vs.85).aspx
+        /// </summary>
+        /// <param name="rootKeyHandle">The handle to the open hive</param>
+        /// <param name="path">The path to a non-existent file in which to save the hive</param>
+        /// <param name="dwOsMajorVersion">The major os version to save the hive for. See summary.</param>
+        /// <param name="dwOsMinorVersion">The minor os version to save the hive for. See summary.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result SaveHive(IntPtr rootKeyHandle,
                                            string path,
                                            uint dwOsMajorVersion,
@@ -153,6 +184,12 @@ namespace OffregLib
         [DllImport(OffRegDllName64, EntryPoint = "ORCloseKey")]
         private static extern Win32Result CloseKey64(IntPtr hKey);
 
+        /// <summary>
+        /// Close an open key.
+        /// See http://msdn.microsoft.com/en-us/library/ee210759(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">The handle to an open key.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result CloseKey(IntPtr hKey)
         {
             return Environment.Is64BitProcess ? CloseKey64(hKey) : CloseKey32(hKey);
@@ -178,6 +215,18 @@ namespace OffregLib
             /*ref IntPtr*/ out IntPtr phkResult,
             out KeyDisposition lpdwDisposition);
 
+        /// <summary>
+        /// Create a new subkey (or open an existing one) under another key.
+        /// See http://msdn.microsoft.com/en-us/library/ee210761(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open key.</param>
+        /// <param name="lpSubKey">Name of the new subkey.</param>
+        /// <param name="lpClass">Name of the type of the new subkey.</param>
+        /// <param name="dwOptions">Options for the creation.</param>
+        /// <param name="lpSecurityDescriptor">Security descripter, may be NULL.</param>
+        /// <param name="phkResult">The handle to the newly created key.</param>
+        /// <param name="lpdwDisposition">The reuslting disposition.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result CreateKey(IntPtr hKey,
                                             string lpSubKey,
                                             string lpClass,
@@ -203,6 +252,13 @@ namespace OffregLib
             IntPtr hKey,
             string lpSubKey);
 
+        /// <summary>
+        /// Delete a subkey.
+        /// See http://msdn.microsoft.com/en-us/library/ee210762(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open parent key.</param>
+        /// <param name="lpSubKey">Name of the subkey, in the parent, to delete. Null indicates that the parent should be deleted.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result DeleteKey(IntPtr hKey,
                                             string lpSubKey)
         {
@@ -219,6 +275,13 @@ namespace OffregLib
             IntPtr hKey,
             string lpValueName);
 
+        /// <summary>
+        /// Delete a value under a key.
+        /// See http://msdn.microsoft.com/en-us/library/ee210763(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open parent key.</param>
+        /// <param name="lpValueName">Name of the value to delete.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result DeleteValue(IntPtr hKey,
                                               string lpValueName)
         {
@@ -245,6 +308,18 @@ namespace OffregLib
             ref uint lpcchClass,
             ref FILETIME lpftLastWriteTime);
 
+        /// <summary>
+        /// Enumerate keys under a parent. 
+        /// See http://msdn.microsoft.com/en-us/library/ee210764(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open parent key.</param>
+        /// <param name="dwIndex">Index of the child to retrieve.</param>
+        /// <param name="lpName">Buffer for the childs name.</param>
+        /// <param name="lpcchName">Size of the childs name buffer.</param>
+        /// <param name="lpClass">Buffer for the childs class.</param>
+        /// <param name="lpcchClass">Size of the childs class buffer.</param>
+        /// <param name="lpftLastWriteTime">FileTime structure indicating last write time.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success, Win32Result.ERROR_NO_MORE_ITEMS indicates that no more childs exist.</returns>
         public static Win32Result EnumKey(IntPtr hKey,
                                           uint dwIndex,
                                           StringBuilder lpName,
@@ -278,6 +353,18 @@ namespace OffregLib
             IntPtr lpcchClass,
             IntPtr lpftLastWriteTime);
 
+        /// <summary>
+        /// Enumerate keys under a parent. 
+        /// See http://msdn.microsoft.com/en-us/library/ee210764(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open parent key.</param>
+        /// <param name="dwIndex">Index of the child to retrieve.</param>
+        /// <param name="lpName">Buffer for the childs name.</param>
+        /// <param name="lpcchName">Size of the childs name buffer.</param>
+        /// <param name="lpClass">Unused - set to Intpr.Zero.</param>
+        /// <param name="lpcchClass">Unused - set to Intpr.Zero.</param>
+        /// <param name="lpftLastWriteTime">Unused - set to Intpr.Zero.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success, Win32Result.ERROR_NO_MORE_ITEMS indicates that no more childs exist.</returns>
         public static Win32Result EnumKey(IntPtr hKey,
                                           uint dwIndex,
                                           StringBuilder lpName,
@@ -311,6 +398,18 @@ namespace OffregLib
             IntPtr lpData,
             ref uint lpcbData);
 
+        /// <summary>
+        /// Enumerate a keys values.
+        /// See http://msdn.microsoft.com/en-us/library/ee210765(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open parent key.</param>
+        /// <param name="dwIndex">Index of the child to retrieve.</param>
+        /// <param name="lpValueName">Buffer for the childs name.</param>
+        /// <param name="lpcchValueName">Size of the childs name buffer.</param>
+        /// <param name="lpType">Value type.</param>
+        /// <param name="lpData">Pointer to data buffer.</param>
+        /// <param name="lpcbData">Size of data buffer.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result EnumValue(IntPtr hKey,
                                             uint dwIndex,
                                             StringBuilder lpValueName,
@@ -331,7 +430,7 @@ namespace OffregLib
             StringBuilder lpValueName,
             ref uint lpcchValueName,
             IntPtr lpType,
-            StringBuilder lpData,
+            IntPtr lpData,
             IntPtr lpcbData);
 
         [DllImport(OffRegDllName64, EntryPoint = "OREnumValue", CharSet = CharSet.Unicode)]
@@ -341,15 +440,27 @@ namespace OffregLib
             StringBuilder lpValueName,
             ref uint lpcchValueName,
             IntPtr lpType,
-            StringBuilder lpData,
+            IntPtr lpData,
             IntPtr lpcbData);
 
+        /// <summary>
+        /// Enumerate a keys values.
+        /// See http://msdn.microsoft.com/en-us/library/ee210765(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open parent key.</param>
+        /// <param name="dwIndex">Index of the child to retrieve.</param>
+        /// <param name="lpValueName">Buffer for the childs name.</param>
+        /// <param name="lpcchValueName">Size of the childs name buffer.</param>
+        /// <param name="lpType">Unused - set to Intpr.Zero.</param>
+        /// <param name="lpData">Unused - set to Intpr.Zero.</param>
+        /// <param name="lpcbData">Unused - set to Intpr.Zero.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result EnumValue(IntPtr hKey,
                                             uint dwIndex,
                                             StringBuilder lpValueName,
                                             ref uint lpcchValueName,
                                             IntPtr lpType,
-                                            StringBuilder lpData,
+                                            IntPtr lpData,
                                             IntPtr lpcbData)
         {
             return Environment.Is64BitProcess
@@ -371,6 +482,15 @@ namespace OffregLib
             IntPtr pSecurityDescriptor,
             ref uint lpcbSecurityDescriptor);
 
+        /// <summary>
+        /// Gets a keys security descriptor.
+        /// See http://msdn.microsoft.com/en-us/library/ee210766(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open key.</param>
+        /// <param name="securityInformation">The type of security information to request.</param>
+        /// <param name="pSecurityDescriptor">Pointer to data buffer.</param>
+        /// <param name="lpcbSecurityDescriptor">Size of the data buffer.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result GetKeySecurity(IntPtr hKey,
                                                  SECURITY_INFORMATION securityInformation,
                                                  IntPtr pSecurityDescriptor,
@@ -399,6 +519,17 @@ namespace OffregLib
             IntPtr pvData,
             ref uint pcbData);
 
+        /// <summary>
+        /// Gets a value under a key.
+        /// See http://msdn.microsoft.com/en-us/library/ee210767(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open key.</param>
+        /// <param name="lpSubKey">The name of the subkey under the parent, from which to retrieve the value. May be null.</param>
+        /// <param name="lpValue">Name of the value to retrieve.</param>
+        /// <param name="pdwType">The type of the value.</param>
+        /// <param name="pvData">Pointer to a data buffer.</param>
+        /// <param name="pcbData">Size of the data buffer.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result GetValue(IntPtr hKey,
                                            string lpSubKey,
                                            string lpValue,
@@ -429,6 +560,17 @@ namespace OffregLib
             IntPtr pvData,
             IntPtr pcbData);
 
+        /// <summary>
+        /// Gets a value under a key.
+        /// See http://msdn.microsoft.com/en-us/library/ee210767(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open key.</param>
+        /// <param name="lpSubKey">The name of the subkey under the parent, from which to retrieve the value. May be null.</param>
+        /// <param name="lpValue">Name of the value to retrieve.</param>
+        /// <param name="pdwType">The type of the value.</param>
+        /// <param name="pvData">Unused - set to Intpr.Zero.</param>
+        /// <param name="pcbData">Unused - set to Intpr.Zero.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result GetValue(IntPtr hKey,
                                            string lpSubKey,
                                            string lpValue,
@@ -453,6 +595,14 @@ namespace OffregLib
             string lpSubKey,
             out IntPtr phkResult);
 
+        /// <summary>
+        /// Open a subkey.
+        /// See http://msdn.microsoft.com/en-us/library/ee210771(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open parent key.</param>
+        /// <param name="lpSubKey">Name of the subkey to open.</param>
+        /// <param name="phkResult">Handle to the opened subkey.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result OpenKey(IntPtr hKey,
                                           string lpSubKey,
                                           out IntPtr phkResult)
@@ -490,6 +640,22 @@ namespace OffregLib
             ref uint lpcbSecurityDescriptor,
             ref FILETIME lpftLastWriteTime);
 
+        /// <summary>
+        /// Query details about a key.
+        /// See http://msdn.microsoft.com/en-us/library/ee210772(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open key.</param>
+        /// <param name="lpClass">The keys class.</param>
+        /// <param name="lpcchClass">The size of the class string.</param>
+        /// <param name="lpcSubKeys">The number of subkeys.</param>
+        /// <param name="lpcbMaxSubKeyLen">The largest name of a subkey.</param>
+        /// <param name="lpcbMaxClassLen">The largest subkey class size.</param>
+        /// <param name="lpcValues">The number of values.</param>
+        /// <param name="lpcbMaxValueNameLen">The largest name of a value.</param>
+        /// <param name="lpcbMaxValueLen">The largest values size.</param>
+        /// <param name="lpcbSecurityDescriptor">The size of the security descriptor for this key.</param>
+        /// <param name="lpftLastWriteTime">The last time the key was written to.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result QueryInfoKey(IntPtr hKey,
                                                StringBuilder lpClass,
                                                ref uint lpcchClass,
@@ -517,7 +683,7 @@ namespace OffregLib
             string lpValueName,
             RegValueType dwType,
             IntPtr lpData,
-            int cbData);
+            uint cbData);
 
         [DllImport(OffRegDllName64, EntryPoint = "ORSetValue", CharSet = CharSet.Unicode)]
         private static extern Win32Result SetValue64(
@@ -525,13 +691,23 @@ namespace OffregLib
             string lpValueName,
             RegValueType dwType,
             IntPtr lpData,
-            int cbData);
+            uint cbData);
 
+        /// <summary>
+        /// Sets a value.
+        /// See http://msdn.microsoft.com/en-us/library/ee210775(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open key.</param>
+        /// <param name="lpValueName">The name of the value.</param>
+        /// <param name="dwType">The type of the value.</param>
+        /// <param name="lpData">The data buffer to save in the value.</param>
+        /// <param name="cbData">The size of the data buffer.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result SetValue(IntPtr hKey,
                                            string lpValueName,
                                            RegValueType dwType,
                                            IntPtr lpData,
-                                           int cbData)
+                                           uint cbData)
         {
             return Environment.Is64BitProcess
                        ? SetValue64(hKey, lpValueName, dwType, lpData, cbData)
@@ -550,6 +726,14 @@ namespace OffregLib
             SECURITY_INFORMATION securityInformation,
             /*ref IntPtr*/ IntPtr pSecurityDescriptor);
 
+        /// <summary>
+        /// Sets a keys security descriptor.
+        /// See http://msdn.microsoft.com/en-us/library/ee210774(v=vs.85).aspx
+        /// </summary>
+        /// <param name="hKey">Handle to an open key.</param>
+        /// <param name="securityInformation">The type of security information to set.</param>
+        /// <param name="pSecurityDescriptor">Pointer to data buffer.</param>
+        /// <returns><see cref="Win32Result"/> of the result. Win32Result.ERROR_SUCCESS indicates success.</returns>
         public static Win32Result SetKeySecurity(IntPtr hKey,
                                                  SECURITY_INFORMATION securityInformation,
                                                  /*ref IntPtr*/ IntPtr pSecurityDescriptor)

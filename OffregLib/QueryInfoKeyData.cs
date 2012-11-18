@@ -2,6 +2,9 @@ using System.Runtime.InteropServices.ComTypes;
 
 namespace OffregLib
 {
+    /// <summary>
+    /// Object representing all the results from the ORQueryInfoKey call
+    /// </summary>
     internal class QueryInfoKeyData
     {
         public string Class { get; set; }

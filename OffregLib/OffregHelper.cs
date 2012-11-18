@@ -5,11 +5,21 @@ namespace OffregLib
 {
     internal static class OffregHelper
     {
+        /// <summary>
+        /// Represents the encoding used by Windows Registry. 
+        /// UTF-16 is valid for Windows 2000 and forward.
+        /// </summary>
         public static Encoding StringEncoding
         {
             get { return Encoding.Unicode; }
         }
 
+        /// <summary>
+        /// Converts some binary data into the form used in the CLR. 
+        /// </summary>
+        /// <param name="type">The type of data to convert from.</param>
+        /// <param name="data">The data to convert.</param>
+        /// <returns>A CLR object.</returns>
         public static object ConvertValueDataToObject(RegValueType type, byte[] data)
         {
             switch (type)

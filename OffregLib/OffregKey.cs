@@ -22,25 +22,58 @@ namespace OffregLib
         public RegValueType Type { get; set; }
     }
 
+    /// <summary>
+    /// Represents a key in the offline registry. Remember to close it (wrap it in usings).
+    /// </summary>
     public class OffregKey : OffregBase
     {
+        /// <summary>
+        /// The name of the key.
+        /// </summary>
         public string Name { get; protected set; }
+
+        /// <summary>
+        /// Best-effort full path of the key.
+        /// </summary>
         public string FullName { get; protected set; }
+
+        /// <summary>
+        /// The parent key.
+        /// </summary>
         private OffregKey _parent;
 
+        /// <summary>
+        /// Gets the number of subkeys under this key.
+        /// </summary>
         public int SubkeyCount
         {
             get { return (int) _metadata.SubKeysCount; }
         }
 
+        /// <summary>
+        /// Gets the number of values under this key.
+        /// </summary>
         public int ValueCount
         {
             get { return (int) _metadata.ValuesCount; }
         }
 
+        /// <summary>
+        /// Indicates if we should close the handle when <see cref="Close"/> is called.
+        /// </summary>
         private bool _ownsPointer = true;
+
+        /// <summary>
+        /// Internal metadata from QueryInfoKey
+        /// </summary>
         private QueryInfoKeyData _metadata;
 
+        /// <summary>
+        /// Constructor, uses an already-open pointer as a key.
+        /// </summary>
+        /// <param name="parent">The parent key.</param>
+        /// <param name="ptr">Handle to an open key.</param>
+        /// <param name="name">The name of the open key.</param>
         internal OffregKey(OffregKey parent, IntPtr ptr, string name)
         {
             _intPtr = ptr;
@@ -53,6 +86,11 @@ namespace OffregLib
             RefreshMetadata();
         }
 
+        /// <summary>
+        /// Constructor, opens a subkey.
+        /// </summary>
+        /// <param name="parentKey">The parent key.</param>
+        /// <param name="name">The name of the subkey to open.</param>
         internal OffregKey(OffregKey parentKey, string name)
         {
             Win32Result result = OffregNative.OpenKey(parentKey._intPtr, name, out _intPtr);
@@ -68,6 +106,9 @@ namespace OffregLib
             RefreshMetadata();
         }
 
+        /// <summary>
+        /// Calls QueryInfoKey and updates _metadata.
+        /// </summary>
         private void RefreshMetadata()
         {
             uint sizeClass = 0;
@@ -113,6 +154,10 @@ namespace OffregLib
             _metadata.SizeSecurityDescriptor = securityDescriptorSize;
         }
 
+        /// <summary>
+        /// Enumerates all subkeys, retrieving both their name and class at the same time.
+        /// </summary>
+        /// <returns>Names and classes of all the subkeys.</returns>
         public SubKeyContainer[] EnumerateSubKeys()
         {
             SubKeyContainer[] results = new SubKeyContainer[_metadata.SubKeysCount];
@@ -144,6 +189,10 @@ namespace OffregLib
             return results;
         }
 
+        /// <summary>
+        /// Enumerates all subkeys, only retrieving their names.
+        /// </summary>
+        /// <returns>Names of all the subkeys.</returns>
         public string[] GetSubKeyNames()
         {
             string[] results = new string[_metadata.SubKeysCount];
@@ -165,11 +214,22 @@ namespace OffregLib
             return results;
         }
 
+        /// <summary>
+        /// Opens a subkey. If you'd like to create it if it doesn't exist, see <see cref="CreateSubKey"/>.
+        /// </summary>
+        /// <param name="name">Name of the subkey to open.</param>
+        /// <returns>The opened subkey.</returns>
         public OffregKey OpenSubKey(string name)
         {
             return new OffregKey(this, name);
         }
 
+        /// <summary>
+        /// Creates a new subkey (or opens an existing one).
+        /// </summary>
+        /// <param name="name">The name of the subkey to create (or open).</param>
+        /// <param name="options">Key creation options.</param>
+        /// <returns>The newly created (or opened) key.</returns>
         public OffregKey CreateSubKey(string name, RegOption options = 0)
         {
             IntPtr newKeyPtr;
@@ -189,7 +249,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Deletes this key, further operations will be invalid
+        /// Deletes this key, further operations will be invalid (except calls to <see cref="Close"/>).
         /// </summary>
         public void Delete()
         {
@@ -205,6 +265,10 @@ namespace OffregLib
             _parent.RefreshMetadata();
         }
 
+        /// <summary>
+        /// Deletes a subkey of this key. The subkey must not contain any subkeys of its own, to delete recursively - see <see cref="DeleteSubKeyTree"/>.
+        /// </summary>
+        /// <param name="name">The name of the subkey to delete</param>
         public void DeleteSubKey(string name)
         {
             if (name == null)
@@ -218,6 +282,10 @@ namespace OffregLib
             RefreshMetadata();
         }
 
+        /// <summary>
+        /// Recursively delete a subkey and all its subkeys.
+        /// </summary>
+        /// <param name="name">Name of the subkey to delete.</param>
         public void DeleteSubKeyTree(string name)
         {
             // Open key
@@ -230,6 +298,10 @@ namespace OffregLib
             RefreshMetadata();
         }
 
+        /// <summary>
+        /// Internal recursive function.
+        /// </summary>
+        /// <param name="key"></param>
         private static void DeleteSubKeyTree(OffregKey key)
         {
             // Get childs
@@ -256,10 +328,14 @@ namespace OffregLib
                 }
             }
 
-            // Delete this
+            // Delete self
             key.Delete();
         }
 
+        /// <summary>
+        /// Enumerates all vaues, only retrieving their names.
+        /// </summary>
+        /// <returns>Names of all the values.</returns>
         public string[] GetValueNames()
         {
             string[] results = new string[_metadata.ValuesCount];
@@ -269,7 +345,7 @@ namespace OffregLib
                 uint sizeName = _metadata.MaxValueNameLen;
 
                 StringBuilder sbName = new StringBuilder((int) sizeName);
-                Win32Result result = OffregNative.EnumValue(_intPtr, item, sbName, ref sizeName, IntPtr.Zero, null,
+                Win32Result result = OffregNative.EnumValue(_intPtr, item, sbName, ref sizeName, IntPtr.Zero, IntPtr.Zero,
                                                             IntPtr.Zero);
 
                 if (result != Win32Result.ERROR_SUCCESS)
@@ -281,6 +357,10 @@ namespace OffregLib
             return results;
         }
 
+        /// <summary>
+        /// Enumerates all values, retrieving both their name, data and type at the same time.
+        /// </summary>
+        /// <returns>Names, datas and types of all the values.</returns>
         public ValueContainer[] EnumerateValues()
         {
             ValueContainer[] results = new ValueContainer[_metadata.ValuesCount];
@@ -330,6 +410,11 @@ namespace OffregLib
             return results;
         }
 
+        /// <summary>
+        /// Gets the type of a single value.
+        /// </summary>
+        /// <param name="name">The name of the value to retrieve the type of.</param>
+        /// <returns>The type of the value.</returns>
         public RegValueType GetValueKind(string name)
         {
             RegValueType type;
@@ -342,6 +427,11 @@ namespace OffregLib
             return type;
         }
 
+        /// <summary>
+        /// Gets the data of a specific value.
+        /// </summary>
+        /// <param name="name">The name of the value to retrieve the data of.</param>
+        /// <returns>The data for the value.</returns>
         public object GetValue(string name)
         {
             Tuple<RegValueType, byte[]> data = GetValueInternal(name);
@@ -349,6 +439,12 @@ namespace OffregLib
             return OffregHelper.ConvertValueDataToObject(data.Item1, data.Item2);
         }
 
+        /// <summary>
+        /// Sets a value to the REG_SZ type.
+        /// </summary>
+        /// <param name="name">The name of the value.</param>
+        /// <param name="value">The data for the value.</param>
+        /// <param name="type">The optional type for the value.</param>
         public void SetValue(string name, string value, RegValueType type = RegValueType.REG_SZ)
         {
             // Always leave a trailing null-terminator
@@ -358,6 +454,12 @@ namespace OffregLib
             SetValue(name, type, data);
         }
 
+        /// <summary>
+        /// Sets a value to the REG_MULTI_SZ type.
+        /// </summary>
+        /// <param name="name">The name of the value.</param>
+        /// <param name="values">The data for the value.</param>
+        /// <param name="type">The optional type for the value.</param>
         public void SetValue(string name, string[] values, RegValueType type = RegValueType.REG_MULTI_SZ)
         {
             if (values.Any(string.IsNullOrEmpty))
@@ -377,11 +479,23 @@ namespace OffregLib
             SetValue(name, type, data);
         }
 
+        /// <summary>
+        /// Sets a value to the REG_BINARY type.
+        /// </summary>
+        /// <param name="name">The name of the value.</param>
+        /// <param name="value">The data for the value.</param>
+        /// <param name="type">The optional type for the value.</param>
         public void SetValue(string name, byte[] value, RegValueType type = RegValueType.REG_BINARY)
         {
             SetValue(name, type, value);
         }
 
+        /// <summary>
+        /// Sets a value to the REG_DWORD type.
+        /// </summary>
+        /// <param name="name">The name of the value.</param>
+        /// <param name="value">The data for the value.</param>
+        /// <param name="type">The optional type for the value.</param>
         public void SetValue(string name, int value, RegValueType type = RegValueType.REG_DWORD)
         {
             byte[] data = BitConverter.GetBytes(value);
@@ -393,6 +507,12 @@ namespace OffregLib
             SetValue(name, type, data);
         }
 
+        /// <summary>
+        /// Sets a value to the REG_QWORD type.
+        /// </summary>
+        /// <param name="name">The name of the value.</param>
+        /// <param name="value">The data for the value.</param>
+        /// <param name="type">The optional type for the value.</param>
         public void SetValue(string name, long value, RegValueType type = RegValueType.REG_QWORD)
         {
             byte[] data = BitConverter.GetBytes(value);
@@ -400,6 +520,12 @@ namespace OffregLib
             SetValue(name, type, data);
         }
 
+        /// <summary>
+        /// Sets a value to the specified type.
+        /// </summary>
+        /// <param name="name">The name of the value.</param>
+        /// <param name="type">The optional type for the value.</param>
+        /// <param name="data">The data for the value.</param>
         private void SetValue(string name, RegValueType type, byte[] data)
         {
             IntPtr dataPtr = IntPtr.Zero;
@@ -410,7 +536,7 @@ namespace OffregLib
 
                 Debug.WriteLine("Setting " + name + " to " + data.Length + " bytes");
 
-                Win32Result result = OffregNative.SetValue(_intPtr, name, type, dataPtr, data.Length);
+                Win32Result result = OffregNative.SetValue(_intPtr, name, type, dataPtr, (uint) data.Length);
 
                 if (result != Win32Result.ERROR_SUCCESS)
                     throw new Win32Exception((int) result);
@@ -424,6 +550,10 @@ namespace OffregLib
             RefreshMetadata();
         }
 
+        /// <summary>
+        /// Deletes a specified value.
+        /// </summary>
+        /// <param name="name">The name of the value to delete.</param>
         public void DeleteValue(string name)
         {
             Win32Result result = OffregNative.DeleteValue(_intPtr, name);
@@ -434,6 +564,11 @@ namespace OffregLib
             RefreshMetadata();
         }
 
+        /// <summary>
+        /// Internal helper to get the type and data for a specified value.
+        /// </summary>
+        /// <param name="name">The name of the value to retrieve data for.</param>
+        /// <returns>The type and data for the specified value.</returns>
         internal Tuple<RegValueType, byte[]> GetValueInternal(string name)
         {
             RegValueType type;
