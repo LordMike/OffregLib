@@ -44,7 +44,8 @@ Microsoft introduced [Volume Shadow Copy](http://en.wikipedia.org/wiki/Shadow_Co
 If you have Shadow Copies enabled (also named System Restore), you'll probably already have a snapshot of C:\ available. I use a handy tool, [Shadow Explorer](http://www.shadowexplorer.com/downloads.html "Shadow Explorers download page"), to explore these shadow copies. It allows you to browse the snapshot, and export any file (f.ex. the Registry Hives). You can then load them into the OffregLib as files, and work with them all you'd like.
 
 If there are no snapshots available, follow the guide here:
-<iframe class="imgur-album" width="100%" height="550" frameborder="0" src="http://imgur.com/a/jKQ4l/embed"></iframe>
+
+    http://imgur.com/a/jKQ4l
 
 Once that's done, you can return to Shadow Explorer (re-start the program if it hasn't registered the new snapshot), and then browse to any of the locations mentioned above - select a hive (the SOFTWARE hive is by far the largest on all systems I've seen), right click and export it.
 
