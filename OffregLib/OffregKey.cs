@@ -1,9 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Linq;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 
 namespace OffregLib
@@ -24,27 +23,27 @@ namespace OffregLib
     }
 
     /// <summary>
-    /// Represents a key in the offline registry. Remember to close it (wrap it in usings).
+    ///     Represents a key in the offline registry. Remember to close it (wrap it in usings).
     /// </summary>
     public class OffregKey : OffregBase
     {
         /// <summary>
-        /// The name of the key.
+        ///     The name of the key.
         /// </summary>
         public string Name { get; protected set; }
 
         /// <summary>
-        /// Best-effort full path of the key.
+        ///     Best-effort full path of the key.
         /// </summary>
         public string FullName { get; protected set; }
 
         /// <summary>
-        /// The parent key.
+        ///     The parent key.
         /// </summary>
         private OffregKey _parent;
 
         /// <summary>
-        /// Gets the number of subkeys under this key.
+        ///     Gets the number of subkeys under this key.
         /// </summary>
         public int SubkeyCount
         {
@@ -52,7 +51,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Gets the number of values under this key.
+        ///     Gets the number of values under this key.
         /// </summary>
         public int ValueCount
         {
@@ -60,17 +59,17 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Indicates if we should close the handle when <see cref="Close"/> is called.
+        ///     Indicates if we should close the handle when <see cref="Close" /> is called.
         /// </summary>
         private bool _ownsPointer = true;
 
         /// <summary>
-        /// Internal metadata from QueryInfoKey
+        ///     Internal metadata from QueryInfoKey
         /// </summary>
         private QueryInfoKeyData _metadata;
 
         /// <summary>
-        /// Constructor, uses an already-open pointer as a key.
+        ///     Constructor, uses an already-open pointer as a key.
         /// </summary>
         /// <param name="parent">The parent key.</param>
         /// <param name="ptr">Handle to an open key.</param>
@@ -88,7 +87,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Constructor, opens a subkey.
+        ///     Constructor, opens a subkey.
         /// </summary>
         /// <param name="parentKey">The parent key.</param>
         /// <param name="name">The name of the subkey to open.</param>
@@ -108,7 +107,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Calls QueryInfoKey and updates _metadata.
+        ///     Calls QueryInfoKey and updates _metadata.
         /// </summary>
         private void RefreshMetadata()
         {
@@ -119,44 +118,49 @@ namespace OffregLib
             FILETIME lastWrite = new FILETIME();
 
             // Get size of class
-            Win32Result result = OffregNative.QueryInfoKey(_intPtr, null, ref sizeClass, ref countSubKeys,
-                                                           ref maxSubKeyLen, ref maxClassLen,
+            StringBuilder sbClass = new StringBuilder((int)sizeClass);
+
+            Win32Result result = OffregNative.QueryInfoKey(_intPtr, sbClass, ref sizeClass, ref countSubKeys,
+                                                           ref maxSubKeyLen,
+                                                           ref maxClassLen,
                                                            ref countValues, ref maxValueNameLen, ref maxValueLen,
                                                            ref securityDescriptorSize,
                                                            ref lastWrite);
 
-            if (result != Win32Result.ERROR_SUCCESS)
-                throw new Win32Exception((int)result);
+            if (result == Win32Result.ERROR_MORE_DATA)
+            {
+                // The returned size does is in characters (unicode), excluding NULL chars. Increment it to have space
+                sizeClass = sizeClass + 1;
 
-            // The returned size does is in characters (unicode), excluding NULL chars. Increment it to have space
-            sizeClass = sizeClass * 2 + 1;
+                // Allocate
+                sbClass = new StringBuilder((int)sizeClass);
 
-            // Allocate
-            StringBuilder sbClass = new StringBuilder((int)sizeClass);
+                result = OffregNative.QueryInfoKey(_intPtr, sbClass, ref sizeClass, ref countSubKeys, ref maxSubKeyLen,
+                                                   ref maxClassLen,
+                                                   ref countValues, ref maxValueNameLen, ref maxValueLen,
+                                                   ref securityDescriptorSize,
+                                                   ref lastWrite);
 
-            result = OffregNative.QueryInfoKey(_intPtr, sbClass, ref sizeClass, ref countSubKeys, ref maxSubKeyLen,
-                                               ref maxClassLen,
-                                               ref countValues, ref maxValueNameLen, ref maxValueLen,
-                                               ref securityDescriptorSize,
-                                               ref lastWrite);
-
-            if (result != Win32Result.ERROR_SUCCESS)
+                if (result != Win32Result.ERROR_SUCCESS)
+                    throw new Win32Exception((int)result);
+            }
+            else if (result != Win32Result.ERROR_SUCCESS)
                 throw new Win32Exception((int)result);
 
             _metadata.Class = sbClass.ToString();
             _metadata.LastWriteTime = lastWrite;
 
             _metadata.SubKeysCount = countSubKeys;
-            _metadata.MaxSubKeyLen = maxSubKeyLen * 2 + 1; // Unicode chars, no null terminator.
-            _metadata.MaxClassLen = maxClassLen * 2 + 1; // Unicode chars, no null terminator.
+            _metadata.MaxSubKeyLen = maxSubKeyLen;
+            _metadata.MaxClassLen = maxClassLen;
             _metadata.ValuesCount = countValues;
-            _metadata.MaxValueNameLen = maxValueNameLen * 2 + 1; // Unicode chars, no null terminator.
+            _metadata.MaxValueNameLen = maxValueNameLen;
             _metadata.MaxValueLen = maxValueLen; // Bytes
             _metadata.SizeSecurityDescriptor = securityDescriptorSize;
         }
 
         /// <summary>
-        /// Enumerates all subkeys, retrieving both their name and class at the same time.
+        ///     Enumerates all subkeys, retrieving both their name and class at the same time.
         /// </summary>
         /// <returns>Names and classes of all the subkeys.</returns>
         public SubKeyContainer[] EnumerateSubKeys()
@@ -165,8 +169,8 @@ namespace OffregLib
 
             for (uint item = 0; item < _metadata.SubKeysCount; item++)
             {
-                uint sizeName = _metadata.MaxSubKeyLen;
-                uint sizeClass = _metadata.MaxClassLen;
+                uint sizeName = _metadata.MaxSubKeyLen + 1;
+                uint sizeClass = _metadata.MaxClassLen + 1;
 
                 StringBuilder sbName = new StringBuilder((int)sizeName);
                 StringBuilder sbClass = new StringBuilder((int)sizeClass);
@@ -191,7 +195,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Enumerates all subkeys, only retrieving their names.
+        ///     Enumerates all subkeys, only retrieving their names.
         /// </summary>
         /// <returns>Names of all the subkeys.</returns>
         public string[] GetSubKeyNames()
@@ -200,7 +204,7 @@ namespace OffregLib
 
             for (uint item = 0; item < _metadata.SubKeysCount; item++)
             {
-                uint sizeName = _metadata.MaxSubKeyLen;
+                uint sizeName = _metadata.MaxSubKeyLen + 1;
 
                 StringBuilder sbName = new StringBuilder((int)sizeName);
                 Win32Result result = OffregNative.EnumKey(_intPtr, item, sbName, ref sizeName, null, IntPtr.Zero,
@@ -216,7 +220,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Opens a subkey. If you'd like to create it if it doesn't exist, see <see cref="CreateSubKey"/>.
+        ///     Opens a subkey. If you'd like to create it if it doesn't exist, see <see cref="CreateSubKey" />.
         /// </summary>
         /// <param name="name">Name of the subkey to open.</param>
         /// <returns>The opened subkey.</returns>
@@ -226,7 +230,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Creates a new subkey (or opens an existing one).
+        ///     Creates a new subkey (or opens an existing one).
         /// </summary>
         /// <param name="name">The name of the subkey to create (or open).</param>
         /// <param name="options">Key creation options.</param>
@@ -250,7 +254,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Deletes this key, further operations will be invalid (except calls to <see cref="Close"/>).
+        ///     Deletes this key, further operations will be invalid (except calls to <see cref="Close" />).
         /// </summary>
         public void Delete()
         {
@@ -267,7 +271,10 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Deletes a subkey of this key. The subkey must not contain any subkeys of its own, to delete recursively - see <see cref="DeleteSubKeyTree"/>.
+        ///     Deletes a subkey of this key. The subkey must not contain any subkeys of its own, to delete recursively - see
+        ///     <see
+        ///         cref="DeleteSubKeyTree" />
+        ///     .
         /// </summary>
         /// <param name="name">The name of the subkey to delete</param>
         public void DeleteSubKey(string name)
@@ -284,7 +291,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Recursively delete a subkey and all its subkeys.
+        ///     Recursively delete a subkey and all its subkeys.
         /// </summary>
         /// <param name="name">Name of the subkey to delete.</param>
         public void DeleteSubKeyTree(string name)
@@ -300,7 +307,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Internal recursive function.
+        ///     Internal recursive function.
         /// </summary>
         /// <param name="key"></param>
         private static void DeleteSubKeyTree(OffregKey key)
@@ -334,7 +341,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Enumerates all vaues, only retrieving their names.
+        ///     Enumerates all vaues, only retrieving their names.
         /// </summary>
         /// <returns>Names of all the values.</returns>
         public string[] GetValueNames()
@@ -343,10 +350,12 @@ namespace OffregLib
 
             for (uint item = 0; item < _metadata.ValuesCount; item++)
             {
-                uint sizeName = _metadata.MaxValueNameLen;
+                uint sizeName = _metadata.MaxValueNameLen + 1;
 
                 StringBuilder sbName = new StringBuilder((int)sizeName);
-                Win32Result result = OffregNative.EnumValue(_intPtr, item, sbName, ref sizeName, IntPtr.Zero, IntPtr.Zero,
+
+                Win32Result result = OffregNative.EnumValue(_intPtr, item, sbName, ref sizeName, IntPtr.Zero,
+                                                            IntPtr.Zero,
                                                             IntPtr.Zero);
 
                 if (result != Win32Result.ERROR_SUCCESS)
@@ -359,7 +368,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Enumerates all values, retrieving both their name, data and type at the same time.
+        ///     Enumerates all values, retrieving both their name, data and type at the same time.
         /// </summary>
         /// <returns>Names, datas and types of all the values.</returns>
         public ValueContainer[] EnumerateValues()
@@ -375,20 +384,18 @@ namespace OffregLib
                 // Iterate all values
                 for (uint item = 0; item < _metadata.ValuesCount; item++)
                 {
-                    uint sizeName = _metadata.MaxValueNameLen;
+                    uint sizeName = _metadata.MaxValueNameLen + 1;
                     uint sizeData = _metadata.MaxValueLen;
 
                     StringBuilder sbName = new StringBuilder((int)sizeName);
                     RegValueType type;
 
                     // Get item
-                    var result = OffregNative.EnumValue(_intPtr, item, sbName, ref sizeName, out type, dataPtr,
-                                                        ref sizeData);
+                    Win32Result result = OffregNative.EnumValue(_intPtr, item, sbName, ref sizeName, out type, dataPtr,
+                                                                ref sizeData);
 
                     if (result != Win32Result.ERROR_SUCCESS)
                         throw new Win32Exception((int)result);
-
-                    Debug.WriteLine("Read " + sbName + " to " + sizeData + " bytes");
 
                     byte[] data = new byte[sizeData];
                     Marshal.Copy(dataPtr, data, 0, (int)sizeData);
@@ -397,7 +404,7 @@ namespace OffregLib
 
                     object parsedData;
                     container.Name = sbName.ToString();
-                    container.InvalidData =  OffregHelper.TryConvertValueDataToObject(type, data, out parsedData);
+                    container.InvalidData = OffregHelper.TryConvertValueDataToObject(type, data, out parsedData);
                     container.Data = parsedData;
                     container.Type = type;
 
@@ -414,7 +421,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Gets the type of a single value.
+        ///     Gets the type of a single value.
         /// </summary>
         /// <param name="name">The name of the value to retrieve the type of.</param>
         /// <returns>The type of the value.</returns>
@@ -431,8 +438,8 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Gets the data for a specific value.
-        /// This method will attempt to convert the data into the format specified by the value, if this fails, it returns a byte[] containing the data.
+        ///     Gets the data for a specific value.
+        ///     This method will attempt to convert the data into the format specified by the value, if this fails, it returns a byte[] containing the data.
         /// </summary>
         /// <param name="name">The name of the value to retrieve the data of.</param>
         /// <returns>The data for the value.</returns>
@@ -447,7 +454,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Attempt to read the data for a value, and parse it.
+        ///     Attempt to read the data for a value, and parse it.
         /// </summary>
         /// <param name="name">The name of the value</param>
         /// <param name="data">The parsed data, or byte[] if parsing failed.</param>
@@ -460,7 +467,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Gets the binry data for a specific value.
+        ///     Gets the binry data for a specific value.
         /// </summary>
         /// <param name="name">The name of the value to retrieve the data of.</param>
         /// <returns>The data for the value.</returns>
@@ -472,7 +479,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Sets a value to the REG_SZ type.
+        ///     Sets a value to the REG_SZ type.
         /// </summary>
         /// <param name="name">The name of the value.</param>
         /// <param name="value">The data for the value.</param>
@@ -480,14 +487,14 @@ namespace OffregLib
         public void SetValue(string name, string value, RegValueType type = RegValueType.REG_SZ)
         {
             // Always leave a trailing null-terminator
-            byte[] data = new byte[OffregHelper.StringEncoding.GetByteCount(value) + 2];
+            byte[] data = new byte[OffregHelper.StringEncoding.GetByteCount(value) + OffregHelper.SingleCharBytes];
             OffregHelper.StringEncoding.GetBytes(value, 0, value.Length, data, 0);
 
             SetValue(name, type, data);
         }
 
         /// <summary>
-        /// Sets a value to the REG_MULTI_SZ type.
+        ///     Sets a value to the REG_MULTI_SZ type.
         /// </summary>
         /// <param name="name">The name of the value.</param>
         /// <param name="values">The data for the value.</param>
@@ -498,21 +505,24 @@ namespace OffregLib
                 throw new ArgumentException("No empty strings allowed");
 
             // A null char for each string, plus a null char at the end
-            int bytes = values.Select(s => OffregHelper.StringEncoding.GetByteCount(s) + 2).Sum() + 2;
+            int bytes =
+                values.Select(s => OffregHelper.StringEncoding.GetByteCount(s) + OffregHelper.SingleCharBytes).Sum() +
+                OffregHelper.SingleCharBytes;
             byte[] data = new byte[bytes];
 
             int position = 0;
             for (int i = 0; i < values.Length; i++)
             {
                 // Save and increment position
-                position += OffregHelper.StringEncoding.GetBytes(values[i], 0, values[i].Length, data, position) + 2;
+                position += OffregHelper.StringEncoding.GetBytes(values[i], 0, values[i].Length, data, position) +
+                            OffregHelper.SingleCharBytes;
             }
 
             SetValue(name, type, data);
         }
 
         /// <summary>
-        /// Sets a value to the REG_BINARY type.
+        ///     Sets a value to the REG_BINARY type.
         /// </summary>
         /// <param name="name">The name of the value.</param>
         /// <param name="value">The data for the value.</param>
@@ -523,7 +533,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Sets a value to the REG_DWORD type.
+        ///     Sets a value to the REG_DWORD type.
         /// </summary>
         /// <param name="name">The name of the value.</param>
         /// <param name="value">The data for the value.</param>
@@ -540,7 +550,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Sets a value to the REG_QWORD type.
+        ///     Sets a value to the REG_QWORD type.
         /// </summary>
         /// <param name="name">The name of the value.</param>
         /// <param name="value">The data for the value.</param>
@@ -553,7 +563,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Sets a value to the specified type.
+        ///     Sets a value to the specified type.
         /// </summary>
         /// <param name="name">The name of the value.</param>
         /// <param name="type">The optional type for the value.</param>
@@ -565,8 +575,6 @@ namespace OffregLib
             {
                 dataPtr = Marshal.AllocHGlobal(data.Length);
                 Marshal.Copy(data, 0, dataPtr, data.Length);
-
-                Debug.WriteLine("Setting " + name + " to " + data.Length + " bytes");
 
                 Win32Result result = OffregNative.SetValue(_intPtr, name, type, dataPtr, (uint)data.Length);
 
@@ -583,7 +591,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Deletes a specified value.
+        ///     Deletes a specified value.
         /// </summary>
         /// <param name="name">The name of the value to delete.</param>
         public void DeleteValue(string name)
@@ -597,7 +605,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Internal helper to get the type and data for a specified value.
+        ///     Internal helper to get the type and data for a specified value.
         /// </summary>
         /// <param name="name">The name of the value to retrieve data for.</param>
         /// <returns>The type and data for the specified value.</returns>

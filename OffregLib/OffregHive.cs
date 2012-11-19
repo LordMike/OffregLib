@@ -6,12 +6,12 @@ namespace OffregLib
     public class OffregHive : OffregBase
     {
         /// <summary>
-        /// The Root key of this hive.
+        ///     The Root key of this hive.
         /// </summary>
         public OffregKey Root { get; private set; }
 
         /// <summary>
-        /// Internal constructor to form an Offline Registry Hive from an open handle.
+        ///     Internal constructor to form an Offline Registry Hive from an open handle.
         /// </summary>
         /// <param name="hivePtr"></param>
         internal OffregHive(IntPtr hivePtr)
@@ -23,8 +23,8 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Saves a hive to Disk.
-        /// See http://msdn.microsoft.com/en-us/library/ee210773(v=vs.85).aspx for more details.
+        ///     Saves a hive to Disk.
+        ///     See http://msdn.microsoft.com/en-us/library/ee210773(v=vs.85).aspx for more details.
         /// </summary>
         /// <remarks>The target file must not exist.</remarks>
         /// <param name="targetFile">The target file to write to.</param>
@@ -35,11 +35,11 @@ namespace OffregLib
             Win32Result res = OffregNative.SaveHive(_intPtr, targetFile, majorVersionTarget, minorVersionTarget);
 
             if (res != Win32Result.ERROR_SUCCESS)
-                throw new Win32Exception((int) res);
+                throw new Win32Exception((int)res);
         }
 
         /// <summary>
-        /// Creates a new hive in memory.
+        ///     Creates a new hive in memory.
         /// </summary>
         /// <returns>The newly created hive.</returns>
         public static OffregHive Create()
@@ -48,13 +48,13 @@ namespace OffregLib
             Win32Result res = OffregNative.CreateHive(out newHive);
 
             if (res != Win32Result.ERROR_SUCCESS)
-                throw new Win32Exception((int) res);
+                throw new Win32Exception((int)res);
 
             return new OffregHive(newHive);
         }
 
         /// <summary>
-        /// Opens an existing hive from the disk.
+        ///     Opens an existing hive from the disk.
         /// </summary>
         /// <param name="hiveFile">The file to open.</param>
         /// <returns>The newly opened hive.</returns>
@@ -70,7 +70,7 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Closes the hive and releases ressources used by it.
+        ///     Closes the hive and releases ressources used by it.
         /// </summary>
         public override void Close()
         {
@@ -79,12 +79,12 @@ namespace OffregLib
                 Win32Result res = OffregNative.CloseHive(_intPtr);
 
                 if (res != Win32Result.ERROR_SUCCESS)
-                    throw new Win32Exception((int) res);
+                    throw new Win32Exception((int)res);
             }
         }
 
         /// <summary>
-        /// Disposes the hive object and releases ressources used by it.
+        ///     Disposes the hive object and releases ressources used by it.
         /// </summary>
         public override void Dispose()
         {

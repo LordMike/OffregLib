@@ -1,6 +1,6 @@
-﻿using System.Text;
+﻿using System.Linq;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
 using OffregLib;
 
 namespace OffregLibTests
@@ -66,6 +66,28 @@ namespace OffregLibTests
         }
 
         [TestMethod]
+        public void InvalidValueSaveReadSzPrematurelyEnded()
+        {
+            byte[] data = Encoding.Unicode.GetBytes("Hello\0World");
+
+            // Data is now two seperate strings
+            _key.SetValue("a", data, RegValueType.REG_SZ);
+            EnsureValueNamesExist("a");
+
+            object result = _key.GetValue("a");
+            object tryParsed;
+            bool couldParse = _key.TryGetValue("a", out tryParsed);
+
+            Assert.IsTrue(couldParse);
+
+            Assert.IsInstanceOfType(result, typeof(string));
+            Assert.IsInstanceOfType(tryParsed, typeof(string));
+
+            Assert.AreEqual("Hello", result);
+            Assert.AreEqual("Hello", tryParsed);
+        }
+
+        [TestMethod]
         public void InvalidValueSaveReadExpandSz()
         {
             byte[] data = new byte[11];
@@ -85,12 +107,6 @@ namespace OffregLibTests
 
             Assert.IsTrue(((byte[])result).SequenceEqual(data));
             Assert.IsTrue(((byte[])tryParsed).SequenceEqual(data));
-        }
-
-        [TestMethod]
-        public void InvalidValueSaveReadBinary()
-        {
-            Assert.Inconclusive("No clue how to do this");
         }
 
         [TestMethod]
@@ -271,21 +287,27 @@ namespace OffregLibTests
         }
 
         [TestMethod]
+        public void InvalidValueSaveReadBinary()
+        {
+            Assert.Inconclusive("No clue how to do this - it's binary");
+        }
+
+        [TestMethod]
         public void InvalidValueSaveReadResourceList()
         {
-            Assert.Inconclusive("Not supported");
+            Assert.Inconclusive("No clue how to do this - it's binary");
         }
 
         [TestMethod]
         public void InvalidValueSaveReadFullResourceDescription()
         {
-            Assert.Inconclusive("Not supported");
+            Assert.Inconclusive("No clue how to do this - it's binary");
         }
 
         [TestMethod]
         public void InvalidValueSaveReadResourceRequirementsList()
         {
-            Assert.Inconclusive("Not supported");
+            Assert.Inconclusive("No clue how to do this - it's binary");
         }
 
         [TestMethod]

@@ -6,8 +6,8 @@ namespace OffregLib
     internal static class OffregHelper
     {
         /// <summary>
-        /// Represents the encoding used by Windows Registry. 
-        /// UTF-16 is valid for Windows 2000 and forward.
+        ///     Represents the encoding used by Windows Registry.
+        ///     UTF-16 is valid for Windows 2000 and forward.
         /// </summary>
         public static Encoding StringEncoding
         {
@@ -15,7 +15,13 @@ namespace OffregLib
         }
 
         /// <summary>
-        /// Converts some binary data into the form used in the CLR. 
+        ///     The number of bytes for a single character in UTF-16.
+        ///     Commonly used to pad byte arrays / sizes with nulls
+        /// </summary>
+        public const int SingleCharBytes = 2;
+
+        /// <summary>
+        ///     Converts some binary data into the form used in the CLR.
         /// </summary>
         /// <param name="type">The type of data to convert from.</param>
         /// <param name="data">The data to convert.</param>
@@ -37,11 +43,12 @@ namespace OffregLib
                         // UTF-16 strings are always an even number of bytes
                         return false;
 
-                    string s1 = StringEncoding.GetString(data);
-                    if (s1.EndsWith("\0"))
-                        s1 = s1.Remove(s1.Length - 1);
+                    // Remove all the trailing nulls
+                    int toIndex = 0;
+                    while (data.Length > toIndex + 2 && (data[toIndex] != 0 || data[toIndex + 1] != 0))
+                        toIndex += 2;
 
-                    parsedData = s1;
+                    parsedData = StringEncoding.GetString(data, 0, toIndex);
                     return true;
                 case RegValueType.REG_BINARY:
                     return true;
@@ -75,7 +82,8 @@ namespace OffregLib
                         return true;
                     }
 
-                    if (data[data.Length - 4] != 0 || data[data.Length - 3] != 0 || data[data.Length - 2] != 0 || data[data.Length - 1] != 0)
+                    if (data[data.Length - 4] != 0 || data[data.Length - 3] != 0 || data[data.Length - 2] != 0 ||
+                        data[data.Length - 1] != 0)
                         // Must always end with four nulls
                         return false;
 
@@ -83,11 +91,11 @@ namespace OffregLib
                     parsedData = s2.Split(new[] { '\0' });
                     return true;
                 case RegValueType.REG_RESOURCE_LIST:
-                    throw new NotSupportedException("REG_RESOURCE_LIST are not supported");
+                    return true;
                 case RegValueType.REG_FULL_RESOURCE_DESCRIPTOR:
-                    throw new NotSupportedException("REG_FULL_RESOURCE_DESCRIPTOR are not supported");
+                    return true;
                 case RegValueType.REG_RESOURCE_REQUIREMENTS_LIST:
-                    throw new NotSupportedException("REG_RESOURCE_REQUIREMENTS_LIST are not supported");
+                    return true;
                 case RegValueType.REG_QWORD:
                     if (data.Length != 8)
                         return false;

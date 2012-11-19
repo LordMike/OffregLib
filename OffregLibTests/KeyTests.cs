@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -59,6 +60,34 @@ namespace OffregLibTests
 
             _key.CreateSubKey(longName).Close();
             EnsureKeyNames("test", "test2", longName);
+        }
+
+        [TestMethod]
+        public void KeyCreateMaxLevels()
+        {
+            // Documentation says that we can create 512 levels deep. 
+            // Testing however indicates that there is some limit at 508 levels.
+            // So we test if we can create at least 500 levels.
+
+            int i = 0;
+            try
+            {
+                OffregKey key = _key;
+                for (i = 0; i < 512; i++)
+                {
+                    key = key.CreateSubKey("longName");
+                    Debug.WriteLine(i + " - " + key.FullName);
+                }
+
+                Assert.Fail();
+            }
+            catch (Win32Exception ex)
+            {
+                Assert.AreEqual(Win32Result.ERROR_INVALID_PARAMETER, (Win32Result)ex.NativeErrorCode);
+
+                if (i < 500)
+                    Assert.Fail("Failed before we could create 500+ levels of subkeys");
+            }
         }
 
         [TestMethod]

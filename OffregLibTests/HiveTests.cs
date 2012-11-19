@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OffregLib;
 
 namespace OffregLibTests

@@ -1,7 +1,8 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
 using OffregLib;
 
 namespace OffregLibTests
@@ -41,6 +42,42 @@ namespace OffregLibTests
             // Ensure all expected names exist
             Assert.IsTrue(expectNames.All(actualNames.Contains));
             Assert.IsTrue(expectNames.All(x => actualEnumNames.Any(s => s.Name == x)));
+        }
+
+        [TestMethod]
+        public void ValueCreateLongName()
+        {
+            StringBuilder sb = new StringBuilder(16383);
+            while (sb.Length < 16383)
+                sb.Append("A");
+            string longName = sb.ToString();
+
+            _key.SetValue(longName, "Hello");
+
+            object value = _key.GetValue(longName);
+
+            Assert.IsInstanceOfType(value, typeof(string));
+            Assert.AreEqual("Hello", (string)value);
+        }
+
+        [TestMethod]
+        public void ValueCreateTooLongName()
+        {
+            try
+            {
+                StringBuilder sb = new StringBuilder(16384);
+                while (sb.Length < 16384)
+                    sb.Append("A");
+                string longName = sb.ToString();
+
+                _key.SetValue(longName, "Hello");
+
+                Assert.Fail();
+            }
+            catch (Win32Exception ex)
+            {
+                Assert.AreEqual(Win32Result.ERROR_INVALID_PARAMETER, (Win32Result)ex.NativeErrorCode);
+            }
         }
 
         [TestMethod]
@@ -101,15 +138,14 @@ namespace OffregLibTests
             EnsureValueNamesExist();
         }
 
-        [TestMethod]
-        public void ValueSaveReadBinary()
+        private void BinaryTest(RegValueType type, int size)
         {
-            byte[] test = new byte[8];
+            byte[] test = new byte[size];
             new Random().NextBytes(test);
 
-            _key.SetValue("B", test);
+            _key.SetValue("B", test, type);
 
-            Assert.AreEqual(RegValueType.REG_BINARY, _key.GetValueKind("B"));
+            Assert.AreEqual(type, _key.GetValueKind("B"));
 
             object result = _key.GetValue("B");
             byte[] binary = _key.GetValueBytes("B");
@@ -123,19 +159,20 @@ namespace OffregLibTests
         }
 
         [TestMethod]
+        public void ValueSaveReadBinary()
+        {
+            for (int i = 0; i < 65535; i += 128)
+                BinaryTest(RegValueType.REG_BINARY, i);
+        }
+
+        [TestMethod]
         public void ValueSaveReadBinaryAsAllTypes()
         {
-            byte[] expected = new byte[8];
+            byte[] expected = new byte[256];
             Random random = new Random();
 
             foreach (RegValueType type in Enum.GetValues(typeof(RegValueType)))
             {
-                if (type == RegValueType.REG_FULL_RESOURCE_DESCRIPTOR || 
-                    type == RegValueType.REG_RESOURCE_LIST ||
-                    type == RegValueType.REG_RESOURCE_REQUIREMENTS_LIST)
-                    // Skip these unsupported types
-                    continue;
-
                 random.NextBytes(expected);
 
                 _key.SetValue("B", expected, type);
@@ -145,7 +182,31 @@ namespace OffregLibTests
                 Assert.IsTrue(expected.SequenceEqual(binaryResult));
 
                 object parsedResult;
-                bool parsed = _key.TryGetValue("B", out parsedResult);
+                _key.TryGetValue("B", out parsedResult);
+
+                _key.DeleteValue("B");
+                EnsureValueNamesExist();
+            }
+        }
+
+        [TestMethod]
+        public void ValueSaveReadBinaryAsAllTypesLarge()
+        {
+            byte[] expected = new byte[65535];
+            Random random = new Random();
+
+            foreach (RegValueType type in Enum.GetValues(typeof(RegValueType)))
+            {
+                random.NextBytes(expected);
+
+                _key.SetValue("B", expected, type);
+                Assert.AreEqual(type, _key.GetValueKind("B"));
+
+                byte[] binaryResult = _key.GetValueBytes("B");
+                Assert.IsTrue(expected.SequenceEqual(binaryResult));
+
+                object parsedResult;
+                _key.TryGetValue("B", out parsedResult);
 
                 _key.DeleteValue("B");
                 EnsureValueNamesExist();
@@ -252,7 +313,10 @@ namespace OffregLibTests
             Assert.IsInstanceOfType(result, typeof(string[]));
             Assert.IsTrue(test.SequenceEqual((string[])result));
 
-            byte[] expectedBinary = test.SelectMany(s => Encoding.Unicode.GetBytes(s).Concat(new byte[] { 0x00, 0x00 })).Concat(new byte[] { 0x00, 0x00 }).ToArray();
+            byte[] expectedBinary =
+                test.SelectMany(s => Encoding.Unicode.GetBytes(s).Concat(new byte[] { 0x00, 0x00 }))
+                    .Concat(new byte[] { 0x00, 0x00 })
+                    .ToArray();
             Assert.IsTrue(binary.SequenceEqual(expectedBinary));
 
             _key.DeleteValue("B");
@@ -262,19 +326,22 @@ namespace OffregLibTests
         [TestMethod]
         public void ValueSaveReadResourceList()
         {
-            Assert.Inconclusive("Not supported");
+            for (int i = 0; i < 65535; i += 128)
+                BinaryTest(RegValueType.REG_RESOURCE_LIST, i);
         }
 
         [TestMethod]
         public void ValueSaveReadFullResourceDescription()
         {
-            Assert.Inconclusive("Not supported");
+            for (int i = 0; i < 65535; i += 128)
+                BinaryTest(RegValueType.REG_FULL_RESOURCE_DESCRIPTOR, i);
         }
 
         [TestMethod]
         public void ValueSaveReadResourceRequirementsList()
         {
-            Assert.Inconclusive("Not supported");
+            for (int i = 0; i < 65535; i += 128)
+                BinaryTest(RegValueType.REG_RESOURCE_REQUIREMENTS_LIST, i);
         }
 
         [TestMethod]
