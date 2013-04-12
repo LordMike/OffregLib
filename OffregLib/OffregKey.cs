@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -402,9 +403,15 @@ namespace OffregLib
 
                     ValueContainer container = new ValueContainer();
 
+                    if (!Enum.IsDefined(typeof (RegValueType), type))
+                    {
+                        WarnDebugForValueType(sbName.ToString(), type);
+                        type = RegValueType.REG_BINARY;
+                    }
+
                     object parsedData;
                     container.Name = sbName.ToString();
-                    container.InvalidData = OffregHelper.TryConvertValueDataToObject(type, data, out parsedData);
+                    container.InvalidData = !OffregHelper.TryConvertValueDataToObject(type, data, out parsedData);
                     container.Data = parsedData;
                     container.Type = type;
 
@@ -447,6 +454,12 @@ namespace OffregLib
         {
             Tuple<RegValueType, byte[]> internalData = GetValueInternal(name);
 
+            if (!Enum.IsDefined(typeof(RegValueType), internalData.Item1))
+            {
+                WarnDebugForValueType(name, internalData.Item1);
+                internalData = new Tuple<RegValueType, byte[]>(RegValueType.REG_BINARY, internalData.Item2);
+            }
+
             object data;
             OffregHelper.TryConvertValueDataToObject(internalData.Item1, internalData.Item2, out data);
 
@@ -462,6 +475,12 @@ namespace OffregLib
         public bool TryGetValue(string name, out object data)
         {
             Tuple<RegValueType, byte[]> internalData = GetValueInternal(name);
+
+            if (!Enum.IsDefined(typeof(RegValueType), internalData.Item1))
+            {
+                WarnDebugForValueType(name, internalData.Item1);
+                internalData = new Tuple<RegValueType, byte[]>(RegValueType.REG_BINARY, internalData.Item2);
+            }
 
             return OffregHelper.TryConvertValueDataToObject(internalData.Item1, internalData.Item2, out data);
         }
@@ -660,6 +679,11 @@ namespace OffregLib
         public override void Dispose()
         {
             Close();
+        }
+
+        private void WarnDebugForValueType(string valueName, RegValueType parsedType)
+        {
+            Debug.WriteLine("WARNING-OFFREGLIB: unknown RegValueType " + parsedType + " converted to Binary in EnumerateValues() at key: " + FullName + ", value: " + valueName);
         }
     }
 }

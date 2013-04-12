@@ -103,7 +103,7 @@ namespace OffregLib
                     parsedData = BitConverter.ToInt64(data, 0);
                     return true;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException("TryConvertValueDataToObject was given an invalid RegValueType: " + type);
             }
         }
     }
