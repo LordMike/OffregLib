@@ -283,5 +283,14 @@ namespace OffregLibTests
             couldOpen = _key.TryOpenSubKey(@"Test\NONEXISTENT\Test3", out tmpKey);
             Assert.IsFalse(couldOpen);
         }
+
+        [TestMethod]
+        public void KeyExists()
+        {
+            _key.CreateSubKey("A").Close();
+
+            Assert.IsTrue(_key.SubkeyExist("A"));
+            Assert.IsFalse(_key.SubkeyExist("B"));
+        }
     }
 }

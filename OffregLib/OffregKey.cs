@@ -561,6 +561,28 @@ namespace OffregLib
         }
 
         /// <summary>
+        ///     Detect if a subkey exists in this key.
+        /// </summary>
+        /// <param name="name">The subkey to find</param>
+        /// <returns>True if it exists, false otherwise.</returns>
+        public bool SubkeyExist(string name)
+        {
+            IntPtr intPtr = IntPtr.Zero;
+            try
+            {
+                Win32Result result = OffregNative.OpenKey(_intPtr, name, out intPtr);
+
+                return result == Win32Result.ERROR_SUCCESS;
+            }
+            finally
+            {
+                // Close up shop
+                if (intPtr != IntPtr.Zero)
+                    OffregNative.CloseKey(intPtr);
+            }
+        }
+
+        /// <summary>
         ///     Gets the binry data for a specific value.
         /// </summary>
         /// <param name="name">The name of the value to retrieve the data of.</param>
