@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>OffregLib</id>
+        <version>0.7</version>
+        <title>OffregLib</title>
+        <authors>Mike</authors>
+        <owners>Mike</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Wrapper library for Microsofts Offreg.dll, which allows you to interact with offline registry hives.</description>
+    </metadata>
+    <files>
+        <file src="content\offreg.x64.dll" target="content\offreg.x64.dll" />
+        <file src="content\offreg.x86.dll" target="content\offreg.x86.dll" />
+        <file src="lib\OffregLib.dll" target="lib\OffregLib.dll" />
+        <file src="tools\install.ps1" target="tools\install.ps1" />
+    </files>
+</package>

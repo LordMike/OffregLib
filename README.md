@@ -9,6 +9,11 @@ I had a task where I needed to access and interpret / modify these Registry Hive
 
 For that purpose, microsoft provided the [Offreg.dll](http://msdn.microsoft.com/en-us/library/ee210757.aspx "MSDN Offline Registry") (available in various Windows SDK's and Driver kits), which is a library for interacting with raw Registry Hive files. It is a COM library, and I have made a .NET wrapper for it which resembles the .NET Registry API as much as possible.
 
+## Nuget
+
+Install from Nuget using the command: **Install-Package OffregLib**
+View more about that here: http://nuget.org/packages/OffregLib/
+
 ## Features
 
 * Open, create and modify Registry Hive files programmatically.
