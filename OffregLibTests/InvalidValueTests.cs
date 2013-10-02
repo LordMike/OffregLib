@@ -54,7 +54,7 @@ namespace OffregLibTests
 
             object result = _key.GetValue("a");
             object tryParsed;
-            bool couldParse = _key.TryGetValue("a", out tryParsed);
+            bool couldParse = _key.TryParseValue("a", out tryParsed);
 
             Assert.IsFalse(couldParse);
 
@@ -76,7 +76,7 @@ namespace OffregLibTests
 
             object result = _key.GetValue("a");
             object tryParsed;
-            bool couldParse = _key.TryGetValue("a", out tryParsed);
+            bool couldParse = _key.TryParseValue("a", out tryParsed);
 
             Assert.IsTrue(couldParse);
 
@@ -98,7 +98,7 @@ namespace OffregLibTests
 
             object result = _key.GetValue("a");
             object tryParsed;
-            bool couldParse = _key.TryGetValue("a", out tryParsed);
+            bool couldParse = _key.TryParseValue("a", out tryParsed);
 
             Assert.IsFalse(couldParse);
 
@@ -119,7 +119,7 @@ namespace OffregLibTests
 
             object result = _key.GetValue("a");
             object tryParsed;
-            bool couldParse = _key.TryGetValue("a", out tryParsed);
+            bool couldParse = _key.TryParseValue("a", out tryParsed);
 
             Assert.IsFalse(couldParse);
 
@@ -140,7 +140,7 @@ namespace OffregLibTests
 
             object result = _key.GetValue("a");
             object tryParsed;
-            bool couldParse = _key.TryGetValue("a", out tryParsed);
+            bool couldParse = _key.TryParseValue("a", out tryParsed);
 
             Assert.IsFalse(couldParse);
 
@@ -162,7 +162,7 @@ namespace OffregLibTests
 
             object result = _key.GetValue("a");
             object tryParsed;
-            bool couldParse = _key.TryGetValue("a", out tryParsed);
+            bool couldParse = _key.TryParseValue("a", out tryParsed);
 
             Assert.IsFalse(couldParse);
 
@@ -184,7 +184,7 @@ namespace OffregLibTests
 
             object result = _key.GetValue("a");
             object tryParsed;
-            bool couldParse = _key.TryGetValue("a", out tryParsed);
+            bool couldParse = _key.TryParseValue("a", out tryParsed);
 
             Assert.IsTrue(couldParse);
 
@@ -208,7 +208,7 @@ namespace OffregLibTests
 
             object result = _key.GetValue("a");
             object tryParsed;
-            bool couldParse = _key.TryGetValue("a", out tryParsed);
+            bool couldParse = _key.TryParseValue("a", out tryParsed);
 
             Assert.IsTrue(couldParse);
 
@@ -229,7 +229,7 @@ namespace OffregLibTests
 
             object result = _key.GetValue("a");
             object tryParsed;
-            bool couldParse = _key.TryGetValue("a", out tryParsed);
+            bool couldParse = _key.TryParseValue("a", out tryParsed);
 
             Assert.IsFalse(couldParse);
 
@@ -250,7 +250,7 @@ namespace OffregLibTests
 
             object result = _key.GetValue("a");
             object tryParsed;
-            bool couldParse = _key.TryGetValue("a", out tryParsed);
+            bool couldParse = _key.TryParseValue("a", out tryParsed);
 
             Assert.IsFalse(couldParse);
 
@@ -275,7 +275,7 @@ namespace OffregLibTests
 
             object result = _key.GetValue("a");
             object tryParsed;
-            bool couldParse = _key.TryGetValue("a", out tryParsed);
+            bool couldParse = _key.TryParseValue("a", out tryParsed);
 
             Assert.IsFalse(couldParse);
 
@@ -320,7 +320,7 @@ namespace OffregLibTests
 
             object result = _key.GetValue("a");
             object tryParsed;
-            bool couldParse = _key.TryGetValue("a", out tryParsed);
+            bool couldParse = _key.TryParseValue("a", out tryParsed);
 
             Assert.IsFalse(couldParse);
 

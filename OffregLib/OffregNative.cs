@@ -85,6 +85,8 @@ namespace OffregLib
     /// </summary>
     public static class OffregNative
     {
+        private static bool Is64BitProcess { get { return IntPtr.Size == 8; } }
+
         private const string OffRegDllName32 = "offreg.x86.dll";
         private const string OffRegDllName64 = "offreg.x64.dll";
 
@@ -104,7 +106,7 @@ namespace OffregLib
         /// </returns>
         public static Win32Result CreateHive(out IntPtr rootKeyHandle)
         {
-            return Environment.Is64BitProcess ? CreateHive64(out rootKeyHandle) : CreateHive32(out rootKeyHandle);
+            return Is64BitProcess ? CreateHive64(out rootKeyHandle) : CreateHive32(out rootKeyHandle);
         }
 
         [DllImport(OffRegDllName32, EntryPoint = "OROpenHive", CharSet = CharSet.Unicode)]
@@ -124,7 +126,7 @@ namespace OffregLib
         /// </returns>
         public static Win32Result OpenHive(string path, out IntPtr rootKeyHandle)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? OpenHive64(path, out rootKeyHandle)
                        : OpenHive32(path, out rootKeyHandle);
         }
@@ -149,7 +151,7 @@ namespace OffregLib
         /// </returns>
         public static Win32Result CloseHive(IntPtr rootKeyHandle)
         {
-            return Environment.Is64BitProcess ? CloseHive64(rootKeyHandle) : CloseHive32(rootKeyHandle);
+            return Is64BitProcess ? CloseHive64(rootKeyHandle) : CloseHive32(rootKeyHandle);
         }
 
         [DllImport(OffRegDllName32, EntryPoint = "ORSaveHive", CharSet = CharSet.Unicode)]
@@ -183,7 +185,7 @@ namespace OffregLib
                                            uint dwOsMajorVersion,
                                            uint dwOsMinorVersion)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? SaveHive64(rootKeyHandle, path, dwOsMajorVersion, dwOsMinorVersion)
                        : SaveHive32(rootKeyHandle, path, dwOsMajorVersion, dwOsMinorVersion);
         }
@@ -204,7 +206,7 @@ namespace OffregLib
         /// </returns>
         public static Win32Result CloseKey(IntPtr hKey)
         {
-            return Environment.Is64BitProcess ? CloseKey64(hKey) : CloseKey32(hKey);
+            return Is64BitProcess ? CloseKey64(hKey) : CloseKey32(hKey);
         }
 
         [DllImport(OffRegDllName32, EntryPoint = "ORCreateKey", CharSet = CharSet.Unicode)]
@@ -249,7 +251,7 @@ namespace OffregLib
             /*ref IntPtr*/ out IntPtr phkResult,
                                             out KeyDisposition lpdwDisposition)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? CreateKey64(hKey, lpSubKey, lpClass, dwOptions, lpSecurityDescriptor, out phkResult,
                                      out lpdwDisposition)
                        : CreateKey32(hKey, lpSubKey, lpClass, dwOptions, lpSecurityDescriptor, out phkResult,
@@ -278,7 +280,7 @@ namespace OffregLib
         public static Win32Result DeleteKey(IntPtr hKey,
                                             string lpSubKey)
         {
-            return Environment.Is64BitProcess ? DeleteKey64(hKey, lpSubKey) : DeleteKey32(hKey, lpSubKey);
+            return Is64BitProcess ? DeleteKey64(hKey, lpSubKey) : DeleteKey32(hKey, lpSubKey);
         }
 
         [DllImport(OffRegDllName32, EntryPoint = "ORDeleteValue", CharSet = CharSet.Unicode)]
@@ -303,7 +305,7 @@ namespace OffregLib
         public static Win32Result DeleteValue(IntPtr hKey,
                                               string lpValueName)
         {
-            return Environment.Is64BitProcess ? DeleteValue64(hKey, lpValueName) : DeleteValue32(hKey, lpValueName);
+            return Is64BitProcess ? DeleteValue64(hKey, lpValueName) : DeleteValue32(hKey, lpValueName);
         }
 
         [DllImport(OffRegDllName32, EntryPoint = "OREnumKey", CharSet = CharSet.Unicode)]
@@ -348,7 +350,7 @@ namespace OffregLib
                                           ref uint lpcchClass,
                                           ref FILETIME lpftLastWriteTime)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? EnumKey64(hKey, dwIndex, lpName, ref lpcchName, lpClass, ref lpcchClass, ref lpftLastWriteTime)
                        : EnumKey32(hKey, dwIndex, lpName, ref lpcchName, lpClass, ref lpcchClass, ref lpftLastWriteTime);
         }
@@ -395,7 +397,7 @@ namespace OffregLib
                                           IntPtr lpcchClass,
                                           IntPtr lpftLastWriteTime)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? EnumKey64(hKey, dwIndex, lpName, ref lpcchName, lpClass, lpcchClass, lpftLastWriteTime)
                        : EnumKey32(hKey, dwIndex, lpName, ref lpcchName, lpClass, lpcchClass, lpftLastWriteTime);
         }
@@ -442,7 +444,7 @@ namespace OffregLib
                                             IntPtr lpData,
                                             ref uint lpcbData)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? EnumValue64(hKey, dwIndex, lpValueName, ref lpcchValueName, out lpType, lpData, ref lpcbData)
                        : EnumValue32(hKey, dwIndex, lpValueName, ref lpcchValueName, out lpType, lpData, ref lpcbData);
         }
@@ -489,7 +491,7 @@ namespace OffregLib
                                             IntPtr lpData,
                                             IntPtr lpcbData)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? EnumValue64(hKey, dwIndex, lpValueName, ref lpcchValueName, lpType, lpData, lpcbData)
                        : EnumValue32(hKey, dwIndex, lpValueName, ref lpcchValueName, lpType, lpData, lpcbData);
         }
@@ -524,7 +526,7 @@ namespace OffregLib
                                                  IntPtr pSecurityDescriptor,
                                                  ref uint lpcbSecurityDescriptor)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? GetKeySecurity64(hKey, securityInformation, pSecurityDescriptor, ref lpcbSecurityDescriptor)
                        : GetKeySecurity32(hKey, securityInformation, pSecurityDescriptor, ref lpcbSecurityDescriptor);
         }
@@ -567,7 +569,7 @@ namespace OffregLib
                                            IntPtr pvData,
                                            ref uint pcbData)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? GetValue64(hKey, lpSubKey, lpValue, out pdwType, pvData, ref pcbData)
                        : GetValue32(hKey, lpSubKey, lpValue, out pdwType, pvData, ref pcbData);
         }
@@ -610,7 +612,7 @@ namespace OffregLib
                                            IntPtr pvData,
                                            IntPtr pcbData)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? GetValue64(hKey, lpSubKey, lpValue, out pdwType, pvData, pcbData)
                        : GetValue32(hKey, lpSubKey, lpValue, out pdwType, pvData, pcbData);
         }
@@ -641,7 +643,7 @@ namespace OffregLib
                                           string lpSubKey,
                                           out IntPtr phkResult)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? OpenKey64(hKey, lpSubKey, out phkResult)
                        : OpenKey32(hKey, lpSubKey, out phkResult);
         }
@@ -704,7 +706,7 @@ namespace OffregLib
                                                ref uint lpcbSecurityDescriptor,
                                                ref FILETIME lpftLastWriteTime)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? QueryInfoKey64(hKey, lpClass, ref lpcchClass, ref lpcSubKeys, ref lpcbMaxSubKeyLen,
                                         ref lpcbMaxClassLen, ref lpcValues, ref lpcbMaxValueNameLen, ref lpcbMaxValueLen,
                                         ref lpcbSecurityDescriptor, ref lpftLastWriteTime)
@@ -747,7 +749,7 @@ namespace OffregLib
                                            IntPtr lpData,
                                            uint cbData)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? SetValue64(hKey, lpValueName, dwType, lpData, cbData)
                        : SetValue32(hKey, lpValueName, dwType, lpData, cbData);
         }
@@ -778,7 +780,7 @@ namespace OffregLib
                                                  SECURITY_INFORMATION securityInformation,
             /*ref IntPtr*/ IntPtr pSecurityDescriptor)
         {
-            return Environment.Is64BitProcess
+            return Is64BitProcess
                        ? SetKeySecurity64(hKey, securityInformation, pSecurityDescriptor)
                        : SetKeySecurity32(hKey, securityInformation, pSecurityDescriptor);
         }

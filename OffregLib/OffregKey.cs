@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
@@ -222,12 +221,74 @@ namespace OffregLib
 
         /// <summary>
         ///     Opens a subkey. If you'd like to create it if it doesn't exist, see <see cref="CreateSubKey" />.
+        ///     Will handle multi-level names, such as "Software\SubKey\Subkey2\"
         /// </summary>
         /// <param name="name">Name of the subkey to open.</param>
         /// <returns>The opened subkey.</returns>
         public OffregKey OpenSubKey(string name)
         {
-            return new OffregKey(this, name);
+            string[] tokens = name.Split('\\');
+
+            OffregKey current = this;
+            bool close = false;
+            foreach (string token in tokens)
+            {
+                if (string.IsNullOrEmpty(token))
+                    continue;
+
+                OffregKey newKey = new OffregKey(current, token);
+
+                if (close)
+                    current.Close();
+
+                current = newKey;
+
+                close = true;
+            }
+
+            return current;
+        }
+
+        /// <summary>
+        ///     Tries to opens a subkey.
+        ///     Will handle multi-level names, such as "Software\SubKey\Subkey2\"
+        /// </summary>
+        /// <param name="name">Name of the subkey to open.</param>
+        /// <param name="key">The newly opened subkey</param>
+        /// <returns>True if the operation was sucessful, false otherwise.</returns>
+        public bool TryOpenSubKey(string name, out OffregKey key)
+        {
+            string[] tokens = name.Split('\\');
+
+            IntPtr childPtr;
+            OffregKey current = this;
+            bool close = false;
+
+            foreach (string token in tokens)
+            {
+                if (string.IsNullOrEmpty(token))
+                    continue;
+
+                Win32Result result = OffregNative.OpenKey(_intPtr, name, out childPtr);
+
+                if (result != Win32Result.ERROR_SUCCESS)
+                {
+                    key = null;
+                    return false;
+                }
+
+                OffregKey newKey = new OffregKey(current, childPtr, token);
+
+                if (close)
+                    current.Close();
+
+                // Move along
+                current = newKey;
+                close = true;
+            }
+
+            key = current;
+            return true;
         }
 
         /// <summary>
@@ -403,7 +464,7 @@ namespace OffregLib
 
                     ValueContainer container = new ValueContainer();
 
-                    if (!Enum.IsDefined(typeof (RegValueType), type))
+                    if (!Enum.IsDefined(typeof(RegValueType), type))
                     {
                         WarnDebugForValueType(sbName.ToString(), type);
                         type = RegValueType.REG_BINARY;
@@ -472,7 +533,7 @@ namespace OffregLib
         /// <param name="name">The name of the value</param>
         /// <param name="data">The parsed data, or byte[] if parsing failed.</param>
         /// <returns>True for success, false otherwise. If the result is false, the data is always a byte[].</returns>
-        public bool TryGetValue(string name, out object data)
+        public bool TryParseValue(string name, out object data)
         {
             Tuple<RegValueType, byte[]> internalData = GetValueInternal(name);
 
@@ -483,6 +544,20 @@ namespace OffregLib
             }
 
             return OffregHelper.TryConvertValueDataToObject(internalData.Item1, internalData.Item2, out data);
+        }
+
+        /// <summary>
+        ///     Detect if a value exists in this key.
+        /// </summary>
+        /// <param name="name">The value to find</param>
+        /// <returns>True if it exists, false otherwise.</returns>
+        public bool ValueExist(string name)
+        {
+            RegValueType type;
+            uint size = 0;
+            Win32Result result = OffregNative.GetValue(_intPtr, null, name, out type, IntPtr.Zero, ref size);
+
+            return result == Win32Result.ERROR_SUCCESS;
         }
 
         /// <summary>
@@ -520,13 +595,18 @@ namespace OffregLib
         /// <param name="type">The optional type for the value.</param>
         public void SetValue(string name, string[] values, RegValueType type = RegValueType.REG_MULTI_SZ)
         {
-            if (values.Any(string.IsNullOrEmpty))
-                throw new ArgumentException("No empty strings allowed");
+            foreach (string value in values)
+                if (string.IsNullOrEmpty(value))
+                    throw new ArgumentException("No empty strings allowed");
 
             // A null char for each string, plus a null char at the end
-            int bytes =
-                values.Select(s => OffregHelper.StringEncoding.GetByteCount(s) + OffregHelper.SingleCharBytes).Sum() +
-                OffregHelper.SingleCharBytes;
+            int bytes = 0;
+            foreach (string value in values)
+            {
+                bytes += OffregHelper.StringEncoding.GetByteCount(value) + OffregHelper.SingleCharBytes;
+            }
+            bytes += OffregHelper.SingleCharBytes;
+
             byte[] data = new byte[bytes];
 
             int position = 0;

@@ -182,7 +182,7 @@ namespace OffregLibTests
                 Assert.IsTrue(expected.SequenceEqual(binaryResult));
 
                 object parsedResult;
-                _key.TryGetValue("B", out parsedResult);
+                _key.TryParseValue("B", out parsedResult);
 
                 _key.DeleteValue("B");
                 EnsureValueNamesExist();
@@ -206,7 +206,7 @@ namespace OffregLibTests
                 Assert.IsTrue(expected.SequenceEqual(binaryResult));
 
                 object parsedResult;
-                _key.TryGetValue("B", out parsedResult);
+                _key.TryParseValue("B", out parsedResult);
 
                 _key.DeleteValue("B");
                 EnsureValueNamesExist();
@@ -373,6 +373,14 @@ namespace OffregLibTests
 
             _key.DeleteValue("B");
             EnsureValueNamesExist();
+        }
+
+        [TestMethod]
+        public void ValueExists()
+        {
+            _key.SetValue("A", 0);
+            Assert.IsTrue(_key.ValueExist("A"));
+            Assert.IsFalse(_key.ValueExist("B"));
         }
     }
 }

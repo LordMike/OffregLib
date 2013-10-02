@@ -237,5 +237,51 @@ namespace OffregLibTests
                 Assert.AreEqual("test", result as string);
             }
         }
+
+        [TestMethod]
+        public void KeyTryOpen()
+        {
+            _key.CreateSubKey("test").Close();
+
+            OffregKey tmpKey;
+            bool couldOpen = _key.TryOpenSubKey("test", out tmpKey);
+            tmpKey.Close();
+
+            Assert.IsTrue(couldOpen);
+
+            couldOpen = _key.TryOpenSubKey("test2", out tmpKey);
+            if (couldOpen)
+                tmpKey.Close();
+
+            Assert.IsFalse(couldOpen);
+        }
+
+        [TestMethod]
+        public void KeyOpenMulti()
+        {
+            // ROOT\Test\Test2\Test3
+            using (OffregKey key = _key.CreateSubKey("Test"))
+            using (OffregKey key2 = key.CreateSubKey("Test2"))
+            using (OffregKey key3 = key2.CreateSubKey("Test3"))
+            {
+                key3.SetValue("A", 42);
+            }
+
+            // Open multiple levels
+            using (OffregKey key = _key.OpenSubKey(@"Test\Test2\Test3"))
+            {
+                Assert.IsTrue(key.ValueExist("A"));
+                Assert.AreEqual(42, key.GetValue("A"));
+            }
+
+            // Try to open multiple levels
+            OffregKey tmpKey;
+            bool couldOpen = _key.TryOpenSubKey(@"Test\Test2\Test3", out tmpKey);
+            Assert.IsTrue(couldOpen);
+            tmpKey.Close();
+
+            couldOpen = _key.TryOpenSubKey(@"Test\NONEXISTENT\Test3", out tmpKey);
+            Assert.IsFalse(couldOpen);
+        }
     }
 }
