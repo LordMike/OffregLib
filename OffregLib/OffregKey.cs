@@ -227,26 +227,7 @@ namespace OffregLib
         /// <returns>The opened subkey.</returns>
         public OffregKey OpenSubKey(string name)
         {
-            string[] tokens = name.Split('\\');
-
-            OffregKey current = this;
-            bool close = false;
-            foreach (string token in tokens)
-            {
-                if (string.IsNullOrEmpty(token))
-                    continue;
-
-                OffregKey newKey = new OffregKey(current, token);
-
-                if (close)
-                    current.Close();
-
-                current = newKey;
-
-                close = true;
-            }
-
-            return current;
+            return new OffregKey(this, name);
         }
 
         /// <summary>
@@ -258,36 +239,16 @@ namespace OffregLib
         /// <returns>True if the operation was sucessful, false otherwise.</returns>
         public bool TryOpenSubKey(string name, out OffregKey key)
         {
-            string[] tokens = name.Split('\\');
-
             IntPtr childPtr;
-            OffregKey current = this;
-            bool close = false;
+            Win32Result result = OffregNative.OpenKey(_intPtr, name, out childPtr);
 
-            foreach (string token in tokens)
+            if (result != Win32Result.ERROR_SUCCESS)
             {
-                if (string.IsNullOrEmpty(token))
-                    continue;
-
-                Win32Result result = OffregNative.OpenKey(_intPtr, name, out childPtr);
-
-                if (result != Win32Result.ERROR_SUCCESS)
-                {
-                    key = null;
-                    return false;
-                }
-
-                OffregKey newKey = new OffregKey(current, childPtr, token);
-
-                if (close)
-                    current.Close();
-
-                // Move along
-                current = newKey;
-                close = true;
+                key = null;
+                return false;
             }
 
-            key = current;
+            key = new OffregKey(this, childPtr, name);
             return true;
         }
 
